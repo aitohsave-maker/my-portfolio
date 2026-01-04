@@ -3,9 +3,9 @@ import { ExternalLink } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const projectImages = [
-    "https://placehold.co/600x400/eef2ff/4f46e5?text=E-Commerce",
-    "https://placehold.co/600x400/f0f9ff/0ea5e9?text=Task+App",
-    "https://placehold.co/600x400/fdf4ff/d946ef?text=Travel+Site"
+    "https://placehold.co/600x400/eef2ff/4f46e5?text=Business+App",
+    "https://placehold.co/600x400/f0f9ff/0ea5e9?text=CAD+Add-in",
+    "https://placehold.co/600x400/fdf4ff/d946ef?text=Gravity+Swap"
 ];
 
 const Works = () => {
@@ -34,9 +34,14 @@ const Works = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                            className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full"
                         >
-                            <div className="relative overflow-hidden aspect-video">
+                            <a
+                                href={project.link}
+                                target={project.link.startsWith('http') || project.link.startsWith('/') ? "_blank" : "_self"}
+                                rel="noopener noreferrer"
+                                className="block relative overflow-hidden aspect-video cursor-pointer"
+                            >
                                 <img
                                     src={projectImages[index]}
                                     alt={project.title}
@@ -45,13 +50,15 @@ const Works = () => {
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                                     <ExternalLink className="text-white w-8 h-8" />
                                 </div>
-                            </div>
-                            <div className="p-6">
+                            </a>
+                            <div className="p-6 flex-1 flex flex-col">
                                 <div className="text-sm font-medium text-blue-600 mb-2">{project.category}</div>
                                 <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors">
-                                    {project.title}
+                                    <a href={project.link} target={project.link.startsWith('/') ? "_blank" : "_self"}>
+                                        {project.title}
+                                    </a>
                                 </h3>
-                                <p className="text-slate-600 text-sm">
+                                <p className="text-slate-600 text-sm flex-1">
                                     {project.description}
                                 </p>
                             </div>

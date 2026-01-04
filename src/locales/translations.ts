@@ -4,83 +4,89 @@ export const translations = {
   en: {
     hero: {
       title1: "Designing the Future",
-      title2: "One Pixel at a Time",
-      description: "Hi, I'm a Frontend Engineer & Web Designer passionate about creating immersive digital experiences.",
+      title2: "With AI & Engineering",
+      description: "Bridging the gap between mechanical engineering and software innovation through the power of Generative AI.",
       button: "View My Work"
     },
     about: {
       title: "About Me",
-      description1: "I am a dedicated Frontend Engineer with a keen eye for design. With over 5 years of experience in building responsive and accessible web applications, I bridge the gap between engineering and aesthetics. I specialize in React, TypeScript, and modern CSS frameworks like Tailwind.",
-      description2: "When I'm not coding, you can find me exploring new design trends, contributing to open source, or brewing the perfect cup of coffee."
+      description1: "With over 10 years of experience in the mechanical design and development industry, I have cultivated a unique blend of engineering and software skills. I initiated and developed internal software solutions to streamline business operations, gaining practical programming expertise along the way.",
+      description2: "Currently, I am focused on exploring the potential of Generative AI, aiming to stay at the forefront of this technological revolution. This portfolio showcases projects created through the collaborative power of human creativity and AI assistant."
     },
     works: {
       title: "Selected Works",
-      description: "A small selection of projects that showcase my passion for clean code and user-centric design.",
+      description: "A collection of projects ranging from business automation tools to interactive games, built with modern technology and AI support.",
       items: [
         {
           id: 1,
-          title: "E-Commerce Platform",
-          category: "Web Application",
-          description: "A full-featured online store built with Next.js and Stripe integration."
+          title: "Business Efficiency Apps",
+          category: "Desktop Application",
+          description: "Custom applications designed to automate workflows and optimize internal processes, significantly reducing manual tasks.",
+          link: "#"
         },
         {
           id: 2,
-          title: "Task Management App",
-          category: "Productivity Tool",
-          description: "Real-time collaboration tool with drag-and-drop kanban boards."
+          title: "CAD Add-ins & Macros",
+          category: "Engineering Tool",
+          description: "Plugins and VBA macros developed to extend 2D/3DCAD functionalities, enhancing design engineering productivity.",
+          link: "#"
         },
         {
           id: 3,
-          title: "Travel Portfolio",
-          category: "Photography Website",
-          description: "Immersive gallery showcasing travel photography from around the world."
+          title: "Gravity Swap",
+          category: "Browser Game",
+          description: "An action-puzzle game where you control gravity. Built entirely with the assistance of Generative AI.",
+          link: "/games/gravity-swap/index.html"
         }
       ]
     },
     contact: {
       title: "Get In Touch",
-      description: "I'm always open to discussing new projects, creative ideas or opportunities to be part of your visions."
+      description: "Interested in collaboration or have a question? Feel free to reach out."
     }
   },
   ja: {
     hero: {
-      title1: "未来をデザインする",
-      title2: "1ピクセルに魂を込めて",
-      description: "フロントエンドエンジニア / Webデザイナー。没入感のあるデジタル体験を創造することに情熱を注いでいます。",
+      title1: "未来を形にする",
+      title2: "AIとエンジニアリングの融合",
+      description: "機械設計のバックグラウンドと最新の生成AI技術を掛け合わせ、新しい価値を創造します。",
       button: "実績を見る"
     },
     about: {
       title: "私について",
-      description1: "デザインへのこだわりを持つフロントエンドエンジニアです。5年以上のWebアプリケーション開発経験を持ち、エンジニアリングとデザインの架け橋となることを目指しています。React, TypeScript, Tailwind CSS等のモダンな技術を得意としています。",
-      description2: "コーディング以外では、新しいデザイントレンドの探求、オープンソースへの貢献、そして完璧なコーヒーを淹れることに時間を費やしています。"
+      description1: "約10年にわたり、機械設計・開発企業にてキャリアを積んでまいりました。本業の傍ら、業務効率化を目的とした社内用ソフトウェアの開発を主導し、実務の中でプログラミングスキルを磨いてきました。",
+      description2: "現在は、急速に進化する生成AI技術に強い関心を持ち、「AIと共創する開発」をテーマに学習と実践を重ねています。本サイトでは、AIのサポートを最大限に活用しながら制作したプロダクトをご紹介いたします。"
     },
     works: {
       title: "制作実績",
-      description: "クリーンなコードとユーザー中心のデザインへのこだわりを体現したいくつかのプロジェクトをご紹介します。",
+      description: "業務効率化ツールからエンターテインメントまで、技術とAIを活用した多様なプロジェクト。",
       items: [
         {
           id: 1,
-          title: "Eコマースプラットフォーム",
-          category: "Webアプリケーション",
-          description: "Next.jsとStripe決済を統合した多機能オンラインストア。"
+          title: "業務効率化アプリ",
+          category: "デスクトップアプリ",
+          description: "社内業務の自動化・効率化を実現するカスタムアプリケーション。手作業を削減し、業務フローを最適化しました。",
+          link: "#"
         },
         {
           id: 2,
-          title: "タスク管理アプリ",
-          category: "生産性向上ツール",
-          description: "ドラッグ＆ドロップで操作可能なカンバンボードを備えたリアルタイムコラボレーションツール。"
+          title: "CADアドイン・マクロ",
+          category: "設計支援ツール",
+          description: "2D/3DCADの機能を拡張するプラグインおよびExcelマクロ。設計開発プロセスの工数短縮に貢献しました。",
+          link: "#"
         },
         {
           id: 3,
-          title: "トラベルポートフォリオ",
-          category: "写真ギャラリー",
-          description: "世界中の旅行写真を展示する、没入感のあるギャラリーサイト。"
+          title: "Gravity Swap",
+          category: "ブラウザゲーム",
+          description: "重力を操作して進むアクションパズルゲーム。企画から実装まで、生成AIのサポートを受けて制作しました。",
+          link: "/games/gravity-swap/index.html"
         }
       ]
     },
     contact: {
       title: "お問い合わせ",
-      description: "新しいプロジェクト、創造的なアイデア、ビジネスの機会について、いつでもお気軽にご相談ください。"
+      description: "新しいプロジェクトや技術的なご相談など、お気軽にお問い合わせください。"
     }
   }
 };

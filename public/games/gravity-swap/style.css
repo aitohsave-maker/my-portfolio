@@ -1,0 +1,41 @@
+body {
+    background-color: #222;
+    color: #eee;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+#game-container {
+    text-align: center;
+}
+
+canvas {
+    background-color: #333;
+    border: 4px solid #555;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    display: block;
+    margin: 0 auto;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-size: 2rem;
+    color: #4DB6AC;
+}
+
+p {
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+#status {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
