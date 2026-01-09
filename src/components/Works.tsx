@@ -5,7 +5,9 @@ import { useLanguage } from '../contexts/LanguageContext';
 const projectImages = [
     "https://placehold.co/600x400/eef2ff/4f46e5?text=Business+App",
     "https://placehold.co/600x400/f0f9ff/0ea5e9?text=CAD+Add-in",
-    "https://placehold.co/600x400/fdf4ff/d946ef?text=Gravity+Swap"
+    "https://placehold.co/600x400/fdf4ff/d946ef?text=Gravity+Swap",
+    "https://placehold.co/600x400/fdf4ff/8b5cf6?text=Gravity+Swap+2",
+    "https://placehold.co/600x400/fdf4ff/ec4899?text=Gravity+Swap+3"
 ];
 
 const Works = () => {

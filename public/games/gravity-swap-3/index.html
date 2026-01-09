@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Swap</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <h1>Gravity Flow</h1>
+        <p class="instructions">矢印キー: 重力の流れを変える | ブロックは流れていく！</p>
+        <p class="mobile-instructions">スワイプ: 重力の流れを変える | ブロックは流れていく！</p>
+        <canvas id="gameCanvas" width="512" height="512"></canvas>
+
+        <!-- Mode Selection Overlay -->
+        <div id="modeSelection"
+            style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 20px; text-align: center; border-radius: 10px; z-index: 10;">
+            <h2 style="color: white; margin-top: 0;">Select Mode</h2>
+            <button onclick="window.game.startGame('SETTLED')"
+                style="display:block; width:200px; margin: 10px auto; padding: 10px;">① Settled Flow</button>
+            <p style="color: #ccc; font-size: 12px;">Blocks spawn after settling.</p>
+            <button onclick="window.game.startGame('REALTIME')"
+                style="display:block; width:200px; margin: 10px auto; padding: 10px;">② Real-Time Flow</button>
+            <p style="color: #ccc; font-size: 12px;">Blocks spawn on timer.</p>
+            <button onclick="window.game.startGame('MANUAL')"
+                style="display:block; width:200px; margin: 10px auto; padding: 10px;">③ Manual Step</button>
+            <p style="color: #ccc; font-size: 12px;">Manual move & spawn.</p>
+        </div>
+
+        <div id="controls">
+            <button id="actionBtn" style="display:none; width: 100%;">RESTART GAME</button>
+        </div>
+        <div id="status">
+            <span>Score: <span id="currentScore">0</span></span> |
+            <span>High Score: <span id="highScore">0</span></span>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+
+</html>

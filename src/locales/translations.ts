@@ -37,6 +37,20 @@ export const translations = {
           category: "Browser Game",
           description: "An action-puzzle game where you control gravity. Built entirely with the assistance of Generative AI.",
           link: "/games/gravity-swap/index.html"
+        },
+        {
+          id: 4,
+          title: "Gravity Swap 2",
+          category: "Browser Game",
+          description: "The sequel to Gravity Swap with enhanced mechanics and more challenging levels.",
+          link: "/games/gravity-swap-2/index.html"
+        },
+        {
+          id: 5,
+          title: "Gravity Swap 3",
+          category: "Browser Game",
+          description: "The latest installment featuring new puzzle elements and advanced gravity manipulation.",
+          link: "/games/gravity-swap-3/index.html"
         }
       ]
     },
@@ -81,6 +95,20 @@ export const translations = {
           category: "ブラウザゲーム",
           description: "重力を操作して進むアクションパズルゲーム。企画から実装まで、生成AIのサポートを受けて制作しました。",
           link: "/games/gravity-swap/index.html"
+        },
+        {
+          id: 4,
+          title: "Gravity Swap 2",
+          category: "ブラウザゲーム",
+          description: "Gravity Swapの続編。ギミックが強化され、より戦略的な重力操作が求められる新ステージを追加しました。",
+          link: "/games/gravity-swap-2/index.html"
+        },
+        {
+          id: 5,
+          title: "Gravity Swap 3",
+          category: "ブラウザゲーム",
+          description: "シリーズ最新作。新しいパズル要素と洗練された操作感で、究極の重力アクション体験を提供します。",
+          link: "/games/gravity-swap-3/index.html"
         }
       ]
     },
