@@ -12,6 +12,7 @@ body {
 
 #game-container {
     text-align: center;
+    width: 100%;
 }
 
 canvas {
@@ -20,6 +21,11 @@ canvas {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     display: block;
     margin: 0 auto;
+    max-width: 90vw;
+    /* Responsive width */
+    max-height: 80vh;
+    /* Prevent too tall on landscape */
+    height: auto;
 }
 
 h1 {
@@ -29,9 +35,49 @@ h1 {
 }
 
 p {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     font-size: 0.9rem;
     color: #aaa;
+}
+
+/* Toggle instructions based on device kind roughly */
+.mobile-instructions {
+    display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .instructions {
+        display: none;
+    }
+
+    .mobile-instructions {
+        display: block;
+    }
+}
+
+#controls {
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+#actionBtn {
+    background-color: #4DB6AC;
+    border: none;
+    border-radius: 8px;
+    color: #222;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 15px 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.2s, transform 0.1s;
+    touch-action: manipulation;
+    /* Improvements for touch */
+}
+
+#actionBtn:active {
+    background-color: #80CBC4;
+    transform: translateY(2px);
 }
 
 #status {

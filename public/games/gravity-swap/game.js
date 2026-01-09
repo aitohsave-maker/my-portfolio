@@ -333,12 +333,18 @@ class Game {
             localStorage.setItem('gravitySwapHighScore', this.highScore);
             this.updateHighScoreDisplay();
         }
+        // Update button text
+        const btn = document.getElementById('actionBtn');
+        if (btn) btn.innerText = "RESTART GAME";
     }
 
     resetGame() {
         this.score = 0;
         this.updateScore(0);
         this.state = 'IDLE';
+        // Update button text
+        const btn = document.getElementById('actionBtn');
+        if (btn) btn.innerText = "SPAWN BLOCKS";
 
         // Clear grid
         for (let r = 0; r < this.grid.rows; r++) {
@@ -377,6 +383,60 @@ class Game {
                 case ' ': this.handleSpawn(); break;
             }
         });
+
+        // Touch (Swipe)
+        let startX = 0;
+        let startY = 0;
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                e.preventDefault(); // Prevent scroll
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scroll while swiping on canvas
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            if (this.state !== 'IDLE') return;
+
+            if (e.changedTouches.length > 0) {
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+
+                const diffX = endX - startX;
+                const diffY = endY - startY;
+                const absX = Math.abs(diffX);
+                const absY = Math.abs(diffY);
+
+                if (Math.max(absX, absY) > 30) { // Threshold
+                    if (absX > absY) {
+                        // Horizontal
+                        if (diffX > 0) this.handleGravityChange(1, 0); // Right
+                        else this.handleGravityChange(-1, 0); // Left
+                    } else {
+                        // Vertical
+                        if (diffY > 0) this.handleGravityChange(0, 1); // Down
+                        else this.handleGravityChange(0, -1); // Up
+                    }
+                }
+            }
+        });
+
+        // Action Button
+        const btn = document.getElementById('actionBtn');
+        if (btn) {
+            btn.addEventListener('click', (e) => {
+                e.target.blur(); // Remove focus so space key logic doesn't interfere if mixed
+                if (this.state === 'GAME_OVER') {
+                    this.resetGame();
+                } else if (this.state === 'IDLE') {
+                    this.handleSpawn();
+                }
+            });
+        }
     }
 
     handleGravityChange(x, y) {

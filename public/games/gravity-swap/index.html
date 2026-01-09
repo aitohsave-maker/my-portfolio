@@ -11,8 +11,12 @@
 <body>
     <div id="game-container">
         <h1>Gravity Swap</h1>
-        <p>矢印キー: 重力変更 | スペース: リセット/補充</p>
+        <p class="instructions">矢印キー: 重力変更 | スペース: リセット/補充</p>
+        <p class="mobile-instructions">スワイプ: 重力変更 | ボタン: 補充</p>
         <canvas id="gameCanvas" width="512" height="512"></canvas>
+        <div id="controls">
+            <button id="actionBtn">SPAWN BLOCKS</button>
+        </div>
         <div id="status">
             <span>Score: <span id="currentScore">0</span></span> |
             <span>High Score: <span id="highScore">0</span></span>
