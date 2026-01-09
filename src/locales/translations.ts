@@ -34,21 +34,21 @@ export const translations = {
         {
           id: 3,
           title: "Gravity Swap",
-          category: "Browser Game",
-          description: "An action-puzzle game where you control gravity. Built entirely with the assistance of Generative AI.",
+          category: "Legacy Game (v1)",
+          description: "The original gravity action-puzzle game. (Archived Version)",
           link: "/games/gravity-swap/index.html"
         },
         {
           id: 4,
           title: "Gravity Swap 2",
-          category: "Browser Game",
-          description: "The sequel to Gravity Swap with enhanced mechanics and more challenging levels.",
+          category: "Legacy Game (v2)",
+          description: "The sequel to Gravity Swap. (Archived Version)",
           link: "/games/gravity-swap-2/index.html"
         },
         {
           id: 5,
           title: "Gravity Swap 3",
-          category: "Browser Game",
+          category: "Latest Game",
           description: "The latest installment featuring new puzzle elements and advanced gravity manipulation.",
           link: "/games/gravity-swap-3/index.html"
         }
@@ -92,21 +92,21 @@ export const translations = {
         {
           id: 3,
           title: "Gravity Swap",
-          category: "ブラウザゲーム",
-          description: "重力を操作して進むアクションパズルゲーム。企画から実装まで、生成AIのサポートを受けて制作しました。",
+          category: "レガシー版 (v1)",
+          description: "初代 Gravity Swap。重力操作パズルの原点。(アーカイブ)",
           link: "/games/gravity-swap/index.html"
         },
         {
           id: 4,
           title: "Gravity Swap 2",
-          category: "ブラウザゲーム",
-          description: "Gravity Swapの続編。ギミックが強化され、より戦略的な重力操作が求められる新ステージを追加しました。",
+          category: "レガシー版 (v2)",
+          description: "Gravity Swapの続編。ギミックが強化されたバージョン。(アーカイブ)",
           link: "/games/gravity-swap-2/index.html"
         },
         {
           id: 5,
           title: "Gravity Swap 3",
-          category: "ブラウザゲーム",
+          category: "最新版 (v3)",
           description: "シリーズ最新作。新しいパズル要素と洗練された操作感で、究極の重力アクション体験を提供します。",
           link: "/games/gravity-swap-3/index.html"
         }

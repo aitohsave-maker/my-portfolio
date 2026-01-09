@@ -16,6 +16,7 @@ class Grid {
         this.cellSize = cellSize;
         this.cells = []; // 2D array: [row][col] (holding Block objects or null)
         this.colors = ['#FF5252', '#448AFF', '#69F0AE', '#FFD740', '#E040FB'];
+        this.gravity = { x: 0, y: 1 };
 
         // initialize empty
         for (let r = 0; r < this.rows; r++) {
@@ -361,7 +362,7 @@ class Game {
 
         // Clear grid
         for (let r = 0; r < this.grid.rows; r++) {
-            for (let c = 0; c < this.cols; c++) {
+            for (let c = 0; c < this.grid.cols; c++) {
                 this.grid.cells[r][c] = null;
             }
         }
@@ -589,6 +590,5 @@ class Game {
     }
 }
 
-window.onload = () => {
-    new Game();
-};
+// Initialize immediately as script is at end of body
+window.game = new Game();
