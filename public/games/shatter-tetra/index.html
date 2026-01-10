@@ -31,14 +31,10 @@
         #game-layout {
             display: flex;
             gap: 20px;
-            align-items: flex-start;
         }
 
         #game-container {
             position: relative;
-            /* Ensure it fits on screen */
-            max-height: 100vh;
-            max-width: 100vw;
         }
 
         #game-canvas {
@@ -137,7 +133,6 @@
             box-sizing: border-box;
             pointer-events: none;
             display: none;
-            z-index: 20;
         }
 
         @media (hover: none) and (pointer: coarse) {
@@ -147,8 +142,8 @@
         }
 
         .control-btn {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
@@ -186,11 +181,9 @@
 
             #game-layout {
                 flex-direction: column-reverse;
-                /* Controls at bottom, game above */
                 align-items: center;
                 gap: 10px;
                 transform: scale(0.85);
-                /* Slightly shrink to fit small screens */
                 transform-origin: top center;
             }
 
@@ -202,29 +195,16 @@
             }
 
             #next-piece-container,
-            #score-container {
+            #score-container,
+            #highscore-container {
                 width: auto;
                 min-width: 80px;
                 padding: 5px;
             }
 
             #game-canvas {
-                /* ensure canvas doesn't overflow */
                 max-width: 95vw;
                 height: auto;
-            }
-
-            /* Adjust controls position for mobile layout */
-            #mobile-controls {
-                bottom: 10px;
-                height: auto;
-                padding: 0 10px;
-            }
-
-            .control-btn {
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
             }
         }
     </style>
@@ -247,13 +227,33 @@
                     <div class="panel-label">SCORE</div>
                     <div id="score" class="score-value">0</div>
                 </div>
+                <div id="highscore-container">
+                    <div class="panel-label">BEST</div>
+                    <div id="highscore" class="score-value"
+                        style="color:var(--neon-yellow); text-shadow:0 0 10px var(--neon-yellow);">0</div>
+                </div>
+                <!-- Difficulty Display -->
+                <div id="diff-display" style="text-align:center; color:#888; margin-top:10px;"></div>
             </div>
         </div>
 
         <div id="game-over">
             <h2>GAME OVER</h2>
             <p>Score: <span id="final-score">0</span></p>
+            <p style="font-size:14px; color:#aaa; margin-top:-10px;">Best: <span id="final-best">0</span></p>
             <button id="restart-btn">RETRY</button>
+            <button id="menu-btn"
+                style="margin-top:10px; background:transparent; color:#aaa; border:1px solid #aaa; padding:5px 10px; cursor:pointer;">MENU</button>
+        </div>
+
+        <div id="start-screen">
+            <h1
+                style="color:var(--neon-blue); text-shadow:0 0 20px var(--neon-blue); margin-bottom:40px; font-size:40px;">
+                SHATTER<br>TETRA</h1>
+            <div class="diff-btn" data-diff="easy" style="border-color: #00ff00; color:#00ff00;">EASY</div>
+            <div class="diff-btn" data-diff="normal" style="border-color: #ffff00; color:#ffff00;">NORMAL</div>
+            <div class="diff-btn" data-diff="hard" style="border-color: #ffaa00; color:#ffaa00;">HARD</div>
+            <div class="diff-btn" data-diff="veryhard" style="border-color: #ff0055; color:#ff0055;">VERY HARD</div>
         </div>
 
         <div id="mobile-controls">
@@ -268,91 +268,119 @@
         </div>
     </div>
 
+    <style>
+        /* Add Start Screen Styles */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 16, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        .diff-btn {
+            width: 200px;
+            padding: 15px;
+            margin: 10px;
+            border: 2px solid white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .diff-btn:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Update Side Panel */
+        #side-panel {
+            gap: 15px;
+        }
+
+        #highscore-container {
+            width: 120px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.1);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+
     <script>
         /**
          * Shatter-Tetra
-         * Core Game Logic (v3: Variable Shapes & Next Piece)
+         * Core Game Logic (v6: High Score)
          */
 
         const COLS = 10;
         const ROWS = 20;
         const BLOCK_SIZE = 32;
 
-        // Colors 1-4
+        // Expanded Colors
         const COLORS = [
             null,
             '#FF0055', // Red
             '#00FF55', // Green
             '#0088FF', // Blue
-            '#FFEE00'  // Yellow
+            '#FFEE00', // Yellow
+            '#AA00FF', // Purple (Normal+)
+            '#00FFFF', // Cyan (Hard+)
+            '#FF8800'  // Orange (Very Hard)
         ];
 
+        // Shapes categorized by size (implicitly)
         const SHAPES = [
             [],
             // --- 4 Blocks (Tetrominoes) ---
-            // I (4x4)
-            [
-                [0, 0, 0, 0],
-                [1, 1, 1, 1],
-                [0, 0, 0, 0],
-                [0, 0, 0, 0]
-            ],
-            // O (2x2)
-            [
-                [1, 1],
-                [1, 1]
-            ],
-            // T (3x3)
-            [
-                [0, 1, 0],
-                [1, 1, 1],
-                [0, 0, 0]
-            ],
-            // S (3x3)
-            [
-                [0, 1, 1],
-                [1, 1, 0],
-                [0, 0, 0]
-            ],
-            // Z (3x3)
-            [
-                [1, 1, 0],
-                [0, 1, 1],
-                [0, 0, 0]
-            ],
-            // J (3x3)
-            [
-                [1, 0, 0],
-                [1, 1, 1],
-                [0, 0, 0]
-            ],
-            // L (3x3)
-            [
-                [0, 0, 1],
-                [1, 1, 1],
-                [0, 0, 0]
-            ],
+            [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], // I
+            [[1, 1], [1, 1]], // O
+            [[0, 1, 0], [1, 1, 1], [0, 0, 0]], // T
+            [[0, 1, 1], [1, 1, 0], [0, 0, 0]], // S
+            [[1, 1, 0], [0, 1, 1], [0, 0, 1]], // Z
+            [[1, 0, 0], [1, 1, 1], [0, 0, 0]], // J
+            [[0, 0, 1], [1, 1, 1], [0, 0, 0]], // L
+
             // --- 3 Blocks (Trominoes) ---
-            // I-Tromino (3x3)
-            [
-                [0, 1, 0],
-                [0, 1, 0],
-                [0, 1, 0]
-            ],
-            // L-Tromino (3x3)
-            [
-                [0, 1, 0],
-                [0, 1, 1],
-                [0, 0, 0]
-            ],
+            [[0, 1, 0], [0, 1, 0], [0, 1, 0]], // I3
+            [[0, 1, 0], [0, 1, 1], [0, 0, 0]], // L3
+
             // --- 2 Blocks (Dominos) ---
-            // Domino (3x3 so rotations stay centered-ish)
-            [
-                [0, 1, 0],
-                [0, 1, 0],
-                [0, 0, 0]
-            ]
+            [[0, 1, 0], [0, 1, 0], [0, 0, 0]], // I2
+
+            // --- 5 Blocks (Pentominoes) - Subset ---
+            [[0, 0, 0, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]], // I5
+            [[0, 0, 0], [1, 1, 1], [1, 0, 1]], // U
+            [[0, 1, 0], [1, 1, 1], [0, 1, 0]], // X
+            [[0, 1, 1], [1, 1, 0], [0, 1, 0]], // F (approx)
+            [[1, 1, 0], [0, 1, 1], [0, 0, 1]]  // W
         ];
+
+        // Map indices for easier filtering
+        // 1-7: Tetrominoes (4)
+        // 8-9: Trominoes (3)
+        // 10: Domino (2)
+        // 11-15: Pentominoes (5)
+
+        const DIFFICULTY = {
+            easy: { colorCount: 4, minSize: 2, maxSize: 4, label: "Easy", id: "easy" },
+            normal: { colorCount: 5, minSize: 2, maxSize: 4, label: "Normal", id: "normal" },
+            hard: { colorCount: 5, minSize: 3, maxSize: 5, label: "Hard", id: "hard" },
+            veryhard: { colorCount: 6, minSize: 3, maxSize: 5, label: "Very Hard", id: "veryhard" }
+        };
 
         class Game {
             constructor() {
@@ -363,37 +391,81 @@
                 this.nextCtx = this.nextCanvas.getContext('2d', { alpha: true });
 
                 this.score = 0;
+                this.highScore = 0;
                 this.gameOver = false;
                 this.isResolving = false;
                 this.particles = [];
-
                 this.grid = this.createGrid(COLS, ROWS);
 
-                this.lastTime = 0;
-                this.dropCounter = 0;
-                this.dropInterval = 1000;
-
-                this.piece = null;
-                this.nextPieceObj = null;
+                this.diffSettings = DIFFICULTY.normal; // Default
 
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
                 document.addEventListener('keydown', (e) => this.handleInput(e));
+
                 document.getElementById('restart-btn').addEventListener('click', () => this.reset());
+                document.getElementById('menu-btn').addEventListener('click', () => this.showMenu());
+
+                // Difficulty Buttons
+                document.querySelectorAll('.diff-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const diff = e.target.getAttribute('data-diff');
+                        this.startGame(diff);
+                    });
+                });
 
                 this.bindTouchControls();
 
-                this.reset();
+                // Wait for menu selection
                 this.update = this.update.bind(this);
-                requestAnimationFrame(this.update);
+                // Don't start loop until game starts
+                this.showMenu(); // Show menu on load
             }
 
             createGrid(cols, rows) {
                 return Array.from({ length: rows }, () => Array(cols).fill(0));
             }
 
-            resize() {
-                // Keeps fixed size for now
+            resize() { /* Fixed */ }
+
+            showMenu() {
+                document.getElementById('start-screen').style.display = 'flex';
+                document.getElementById('game-over').style.display = 'none';
+                this.gameOver = true; // Stop updates
+                this.running = false; // Ensure update loop is not running
+            }
+
+            startGame(diffKey) {
+                this.diffSettings = DIFFICULTY[diffKey];
+                document.getElementById('diff-display').innerText = this.diffSettings.label;
+
+                // Load High Score
+                this.highScore = this.loadHighScore(diffKey);
+                document.getElementById('highscore').innerText = this.highScore;
+
+                document.getElementById('start-screen').style.display = 'none';
+
+                this.reset();
+                if (!this.running) {
+                    this.running = true;
+                    requestAnimationFrame(this.update);
+                }
+            }
+
+            loadHighScore(diffKey) {
+                const key = `shatter-tetra-score-${diffKey}`;
+                return parseInt(localStorage.getItem(key)) || 0;
+            }
+
+            saveHighScore() {
+                const key = `shatter-tetra-score-${this.diffSettings.id}`;
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem(key, this.highScore);
+                    document.getElementById('highscore').innerText = this.highScore;
+                    return true; // New Record
+                }
+                return false;
             }
 
             reset() {
@@ -402,91 +474,117 @@
                 this.gameOver = false;
                 this.isResolving = false;
                 this.dropInterval = 1000;
+                this.startTime = Date.now();
+                this.level = 1;
                 this.particles = [];
                 this.updateScore(0);
 
-                // Init pieces
-                this.nextPieceObj = this.generateRandomPiece();
+                this.nextPieceObj = this.generatePiece();
                 this.spawnPiece();
 
                 document.getElementById('game-over').style.display = 'none';
-
-                // clear
                 this.ctx.fillStyle = '#050510';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             }
 
-            generateRandomPiece() {
-                const typeId = Math.floor(Math.random() * (SHAPES.length - 1)) + 1;
+            generatePiece() {
+                // Filter shapes based on difficulty size constraints
+                // 4 blocks: indices 1-7
+                // 3 blocks: indices 8-9
+                // 2 blocks: index 10
+                // 5 blocks: indices 11+
+                const validIndices = [];
+                SHAPES.forEach((s, i) => {
+                    if (i === 0) return;
+                    // Count blocks to determine size
+                    let size = 0;
+                    s.forEach(row => row.forEach(val => { if (val) size++; }));
+                    if (size >= this.diffSettings.minSize && size <= this.diffSettings.maxSize) {
+                        validIndices.push(i);
+                    }
+                });
+
+                const typeId = validIndices[Math.floor(Math.random() * validIndices.length)];
                 const shapeTemplate = SHAPES[typeId];
 
+                const colorLimit = this.diffSettings.colorCount;
+
                 const shape = shapeTemplate.map(row =>
-                    row.map(cell => cell ? Math.floor(Math.random() * (COLORS.length - 1)) + 1 : 0)
+                    row.map(cell => cell ? Math.floor(Math.random() * colorLimit) + 1 : 0)
                 );
 
-                return {
-                    shape: shape,
-                    typeId: typeId
-                };
+                return { shape, typeId };
             }
 
             spawnPiece() {
-                // Promote next piece
                 const pObj = this.nextPieceObj;
                 this.piece = {
                     shape: pObj.shape,
                     x: Math.floor(COLS / 2) - Math.ceil(pObj.shape[0].length / 2),
                     y: 0
                 };
-
-                // Generate new next piece
-                this.nextPieceObj = this.generateRandomPiece();
+                this.nextPieceObj = this.generatePiece();
                 this.drawNextPiece();
 
                 if (this.collide(this.grid, this.piece)) {
-                    this.gameOver = true;
-                    document.getElementById('final-score').innerText = this.score;
-                    document.getElementById('game-over').style.display = 'block';
+                    this.triggerGameOver();
                 }
             }
+
+            triggerGameOver() {
+                this.gameOver = true;
+                this.saveHighScore();
+
+                document.getElementById('final-score').innerText = this.score;
+                document.getElementById('final-best').innerText = this.highScore;
+                document.getElementById('game-over').style.display = 'block';
+            }
+
+            // ... collide, update, pieceDrop, applyGravity, createExplosion, getConnectedGroup, sleep, draw, etc ...
+            // Copying existing methods to maintain functionality
 
             collide(grid, piece) {
                 const m = piece.shape;
                 const o = piece;
                 for (let y = 0; y < m.length; ++y) {
                     for (let x = 0; x < m[y].length; ++x) {
-                        if (m[y][x] !== 0 &&
-                            (grid[y + o.y] && grid[y + o.y][x + o.x]) !== 0) {
-                            return true;
-                        }
+                        if (m[y][x] !== 0 && (grid[y + o.y] && grid[y + o.y][x + o.x]) !== 0) return true;
                     }
                 }
                 return false;
             }
 
             update(time = 0) {
+                if (this.gameOver && document.getElementById('start-screen').style.display === 'none' && document.getElementById('game-over').style.display === 'none') {
+                    // Should technically not happen if game loop stops, but for safety
+                }
+
+                if (this.running) requestAnimationFrame(this.update);
+
+                // Pause if game over specific UI is up? No, keep rendering usually
+                if (document.getElementById('start-screen').style.display !== 'none') return;
                 if (this.gameOver) return;
 
                 const deltaTime = time - this.lastTime;
                 this.lastTime = time;
 
-                // Update Particles
+                const elapsed = Date.now() - this.startTime;
+                const newLevel = Math.floor(elapsed / 30000) + 1;
+                if (newLevel > this.level) {
+                    this.level = newLevel;
+                    this.dropInterval = Math.max(100, 1000 - (this.level - 1) * 100);
+                }
+
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     this.particles[i].update();
-                    if (this.particles[i].life <= 0) {
-                        this.particles.splice(i, 1);
-                    }
+                    if (this.particles[i].life <= 0) this.particles.splice(i, 1);
                 }
 
                 if (!this.isResolving) {
                     this.dropCounter += deltaTime;
-                    if (this.dropCounter > this.dropInterval) {
-                        this.pieceDrop();
-                    }
+                    if (this.dropCounter > this.dropInterval) this.pieceDrop();
                 }
-
                 this.draw();
-                requestAnimationFrame(this.update);
             }
 
             pieceDrop() {
@@ -499,54 +597,48 @@
             }
 
             async lockPiece() {
-                // 1. Merge active piece into grid with their individual colors
                 this.piece.shape.forEach((row, y) => {
                     row.forEach((value, x) => {
-                        if (value !== 0) {
-                            this.grid[y + this.piece.y][x + this.piece.x] = value;
-                        }
+                        if (value !== 0) this.grid[y + this.piece.y][x + this.piece.x] = value;
                     });
                 });
-
-                this.piece = null; // Hide piece during resolution
+                this.piece = null;
                 this.isResolving = true;
 
-                // 2. Loop: Gravity -> Match -> Gravity ...
                 let changed = true;
+                let chain = 0;
+
                 while (changed) {
-                    // Apply Gravity (Shatter)
-                    await this.sleep(150); // Small delay to visualize steps
+                    await this.sleep(150);
                     const gravityMoved = this.applyGravity();
-
-                    // Draw state after gravity
                     this.draw();
-
                     await this.sleep(150);
 
-                    // Check Matches
-                    const matchesCleared = this.clearMatches();
+                    const { cleared, count } = this.clearMatches(); // Modified signature
 
-                    if (matchesCleared) {
-                        this.score += 100; // Simple scoring
+                    if (cleared) {
+                        chain++;
+                        // New Formula: (100 + (Count - 4) * 20) * (2^(Chain-1))
+                        const base = 100 + (count - 4) * 20;
+                        const multiplier = Math.pow(2, chain - 1);
+                        const points = base * multiplier;
+
+                        this.score += points;
                         this.updateScore(this.score);
                     }
 
-                    changed = gravityMoved || matchesCleared;
+                    changed = gravityMoved || cleared;
                 }
-
                 this.isResolving = false;
                 this.spawnPiece();
             }
 
             applyGravity() {
                 let moved = false;
-                // Process each column
                 for (let x = 0; x < COLS; x++) {
                     let writeY = ROWS - 1;
-                    // Iterate from bottom up
                     for (let y = ROWS - 1; y >= 0; y--) {
                         if (this.grid[y][x] !== 0) {
-                            // If the block is not at the write position, it means it falls
                             if (y !== writeY) {
                                 this.grid[writeY][x] = this.grid[y][x];
                                 this.grid[y][x] = 0;
@@ -560,9 +652,9 @@
             }
 
             clearMatches() {
-                // Flood fill to find connected components
                 const visited = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
                 let toRemove = [];
+                let totalCleared = 0;
 
                 for (let y = 0; y < ROWS; y++) {
                     for (let x = 0; x < COLS; x++) {
@@ -575,15 +667,16 @@
                     }
                 }
 
-                if (toRemove.length > 0) {
+                totalCleared = toRemove.length;
+                if (totalCleared > 0) {
                     toRemove.forEach(pos => {
                         const color = this.grid[pos.y][pos.x];
                         this.createExplosion(pos.x, pos.y, COLORS[color]);
                         this.grid[pos.y][pos.x] = 0;
                     });
-                    return true;
+                    return { cleared: true, count: totalCleared };
                 }
-                return false;
+                return { cleared: false, count: 0 };
             }
 
             createExplosion(x, y, color) {
@@ -604,11 +697,9 @@
                 while (queue.length > 0) {
                     const { x, y } = queue.shift();
                     const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-
                     for (let d of dirs) {
                         const nx = x + d[0];
                         const ny = y + d[1];
-
                         if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) {
                             if (!visited[ny][nx] && this.grid[ny][nx] === color) {
                                 visited[ny][nx] = true;
@@ -621,44 +712,27 @@
                 return group;
             }
 
-            sleep(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
+            sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
             draw() {
-                // Background
                 this.ctx.fillStyle = '#050510';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-                // Grid
                 this.drawMatrix(this.ctx, this.grid, { x: 0, y: 0 });
-
-                // Active Piece
-                if (this.piece) {
-                    this.drawMatrix(this.ctx, this.piece.shape, { x: this.piece.x, y: this.piece.y });
-                }
-
-                // Particles
+                if (this.piece) this.drawMatrix(this.ctx, this.piece.shape, { x: this.piece.x, y: this.piece.y });
                 this.particles.forEach(p => p.draw(this.ctx));
             }
 
             drawNextPiece() {
                 this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
-
                 if (!this.nextPieceObj) return;
-
                 const shape = this.nextPieceObj.shape;
-
                 const w = shape[0].length * 20;
                 const h = shape.length * 20;
                 const tx = (this.nextCanvas.width - w) / 2;
                 const ty = (this.nextCanvas.height - h) / 2;
-
                 shape.forEach((row, y) => {
                     row.forEach((value, x) => {
-                        if (value !== 0) {
-                            this.drawBlockCtx(this.nextCtx, x, y, value, 20, tx, ty);
-                        }
+                        if (value !== 0) this.drawBlockCtx(this.nextCtx, x, y, value, 20, tx, ty);
                     });
                 });
             }
@@ -666,9 +740,7 @@
             drawMatrix(ctx, matrix, offset) {
                 matrix.forEach((row, y) => {
                     row.forEach((value, x) => {
-                        if (value !== 0) {
-                            this.drawBlockCtx(ctx, x + offset.x, y + offset.y, value, BLOCK_SIZE, 0, 0);
-                        }
+                        if (value !== 0) this.drawBlockCtx(ctx, x + offset.x, y + offset.y, value, BLOCK_SIZE, 0, 0);
                     });
                 });
             }
@@ -679,38 +751,25 @@
                 ctx.fillStyle = color;
                 ctx.shadowBlur = 10;
                 ctx.shadowColor = color;
-
                 const px = x * size + offX;
                 const py = y * size + offY;
-
                 ctx.fillRect(px + 1, py + 1, size - 2, size - 2);
-
-                // Inner highlight
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.fillRect(px + size * 0.15, py + size * 0.15, size - size * 0.3, size - size * 0.3);
-
                 ctx.shadowBlur = 0;
             }
 
             handleInput(event) {
-                if (this.gameOver || this.isResolving) return;
-
-                if (event.keyCode === 37) { // Left
-                    this.pieceMove(-1);
-                } else if (event.keyCode === 39) { // Right
-                    this.pieceMove(1);
-                } else if (event.keyCode === 40) { // Down
-                    this.pieceDrop();
-                } else if (event.keyCode === 38) { // Up (Rotate)
-                    this.pieceRotate();
-                }
+                if (this.gameOver || this.isResolving || document.getElementById('start-screen').style.display !== 'none') return;
+                if (event.keyCode === 37) this.pieceMove(-1);
+                else if (event.keyCode === 39) this.pieceMove(1);
+                else if (event.keyCode === 40) this.pieceDrop();
+                else if (event.keyCode === 38) this.pieceRotate();
             }
 
             pieceMove(dir) {
                 this.piece.x += dir;
-                if (this.collide(this.grid, this.piece)) {
-                    this.piece.x -= dir;
-                }
+                if (this.collide(this.grid, this.piece)) this.piece.x -= dir;
             }
 
             pieceRotate() {
@@ -734,11 +793,8 @@
                         [matrix[x][y], matrix[y][x]] = [matrix[y][x], matrix[x][y]];
                     }
                 }
-                if (dir > 0) {
-                    matrix.forEach(row => row.reverse());
-                } else {
-                    matrix.reverse();
-                }
+                if (dir > 0) matrix.forEach(row => row.reverse());
+                else matrix.reverse();
             }
 
             bindTouchControls() {
@@ -747,11 +803,11 @@
                     if (btn) {
                         btn.addEventListener('touchstart', (e) => {
                             e.preventDefault();
-                            if (!this.isResolving && !this.gameOver) fn();
+                            if (!this.isResolving && !this.gameOver && document.getElementById('start-screen').style.display === 'none') fn();
                         }, { passive: false });
                         btn.addEventListener('mousedown', (e) => {
                             e.preventDefault();
-                            if (!this.isResolving && !this.gameOver) fn();
+                            if (!this.isResolving && !this.gameOver && document.getElementById('start-screen').style.display === 'none') fn();
                         });
                     }
                 };
@@ -760,6 +816,47 @@
                 addTouch('btn-right', () => this.pieceMove(1));
                 addTouch('btn-down', () => this.pieceDrop());
                 addTouch('btn-rotate', () => this.pieceRotate());
+
+                const container = document.getElementById('game-container');
+                let touchStartX = 0;
+                let touchStartY = 0;
+                let lastMoveX = 0;
+                let lastMoveY = 0;
+                let isTap = true;
+
+                container.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.gameOver || this.isResolving || document.getElementById('start-screen').style.display !== 'none') return;
+                    const t = e.touches[0];
+                    touchStartX = t.clientX;
+                    touchStartY = t.clientY;
+                    lastMoveX = t.clientX;
+                    lastMoveY = t.clientY;
+                    isTap = true;
+                }, { passive: false });
+
+                container.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (this.gameOver || this.isResolving || document.getElementById('start-screen').style.display !== 'none') return;
+                    const t = e.touches[0];
+                    const dx = t.clientX - lastMoveX;
+                    const dy = t.clientY - lastMoveY;
+                    const moveThreshold = 30;
+
+                    if (Math.abs(t.clientX - touchStartX) > 10 || Math.abs(t.clientY - touchStartY) > 10) isTap = false;
+
+                    if (dx > moveThreshold) { this.pieceMove(1); lastMoveX = t.clientX; }
+                    else if (dx < -moveThreshold) { this.pieceMove(-1); lastMoveX = t.clientX; }
+
+                    if (dy > moveThreshold) { this.pieceDrop(); lastMoveY = t.clientY; }
+
+                }, { passive: false });
+
+                container.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (this.gameOver || this.isResolving || document.getElementById('start-screen').style.display !== 'none') return;
+                    if (isTap) this.pieceRotate();
+                });
             }
 
             updateScore(newScore) {
