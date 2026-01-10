@@ -33,17 +33,10 @@ export const translations = {
         },
         {
           id: 3,
-          title: "Gravity Swap",
-          category: "Legacy Game (v1)",
-          description: "The original gravity action-puzzle game. (Archived Version)",
-          link: "/games/gravity-swap/index.html"
-        },
-        {
-          id: 4,
-          title: "Gravity Swap 2",
-          category: "Legacy Game (v2)",
-          description: "The sequel to Gravity Swap. (Archived Version)",
-          link: "/games/gravity-swap-2/index.html"
+          title: "Shatter Tetra",
+          category: "Latest Game",
+          description: "A 3D puzzle game where you break blocks with physics-based destruction.",
+          link: "/games/shatter-tetra/index.html"
         },
         {
           id: 5,
@@ -52,7 +45,28 @@ export const translations = {
           description: "The latest installment featuring new puzzle elements and advanced gravity manipulation.",
           link: "/games/gravity-swap-3/index.html"
         }
-      ]
+      ],
+      archives: {
+        title: "The Warehouse (Archives)",
+        button: "Enter Warehouse",
+        close: "Close Warehouse",
+        items: [
+          {
+            id: 101,
+            title: "Gravity Swap",
+            category: "Legacy Game (v1)",
+            description: "The original gravity action-puzzle game. (Archived Version)",
+            link: "/games/gravity-swap/index.html"
+          },
+          {
+            id: 102,
+            title: "Gravity Swap 2",
+            category: "Legacy Game (v2)",
+            description: "The sequel to Gravity Swap. (Archived Version)",
+            link: "/games/gravity-swap-2/index.html"
+          }
+        ]
+      }
     },
     contact: {
       title: "Get In Touch",
@@ -91,17 +105,10 @@ export const translations = {
         },
         {
           id: 3,
-          title: "Gravity Swap",
-          category: "レガシー版 (v1)",
-          description: "初代 Gravity Swap。重力操作パズルの原点。(アーカイブ)",
-          link: "/games/gravity-swap/index.html"
-        },
-        {
-          id: 4,
-          title: "Gravity Swap 2",
-          category: "レガシー版 (v2)",
-          description: "Gravity Swapの続編。ギミックが強化されたバージョン。(アーカイブ)",
-          link: "/games/gravity-swap-2/index.html"
+          title: "Shatter Tetra",
+          category: "最新ゲーム",
+          description: "物理演算を利用した爽快な3Dブロック破壊パズルゲーム。",
+          link: "/games/shatter-tetra/index.html"
         },
         {
           id: 5,
@@ -110,7 +117,28 @@ export const translations = {
           description: "シリーズ最新作。新しいパズル要素と洗練された操作感で、究極の重力アクション体験を提供します。",
           link: "/games/gravity-swap-3/index.html"
         }
-      ]
+      ],
+      archives: {
+        title: "倉庫 (アーカイブ)",
+        button: "倉庫に入る",
+        close: "倉庫を閉じる",
+        items: [
+          {
+            id: 101,
+            title: "Gravity Swap",
+            category: "レガシー版 (v1)",
+            description: "初代 Gravity Swap。重力操作パズルの原点。(アーカイブ)",
+            link: "/games/gravity-swap/index.html"
+          },
+          {
+            id: 102,
+            title: "Gravity Swap 2",
+            category: "レガシー版 (v2)",
+            description: "Gravity Swapの続編。ギミックが強化されたバージョン。(アーカイブ)",
+            link: "/games/gravity-swap-2/index.html"
+          }
+        ]
+      }
     },
     contact: {
       title: "お問い合わせ",
