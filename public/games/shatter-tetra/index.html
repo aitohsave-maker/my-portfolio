@@ -412,11 +412,16 @@
                 document.getElementById('menu-btn').addEventListener('click', () => this.showMenu());
 
                 // Difficulty Buttons
+                // Difficulty Buttons
                 document.querySelectorAll('.diff-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
+                    const startFn = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         const diff = e.target.getAttribute('data-diff');
                         this.startGame(diff);
-                    });
+                    };
+                    btn.addEventListener('click', startFn);
+                    btn.addEventListener('touchstart', startFn, { passive: false });
                 });
 
                 this.bindTouchControls();
@@ -830,8 +835,9 @@
                 let isTap = true;
 
                 container.addEventListener('touchstart', (e) => {
+                    if (document.getElementById('start-screen').style.display !== 'none') return;
                     e.preventDefault();
-                    if (this.gameOver || this.isResolving || document.getElementById('start-screen').style.display !== 'none') return;
+                    if (this.gameOver || this.isResolving) return;
                     const t = e.touches[0];
                     touchStartX = t.clientX;
                     touchStartY = t.clientY;
