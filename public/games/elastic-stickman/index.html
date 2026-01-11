@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>エラスティック・スティックマン</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+            /* Prevent browser handling of gestures */
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f0f0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        #score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.5);
+        }
+
+        #tutorial {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            pointer-events: auto;
+            max-width: 80%;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+
+        p {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #555;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 24px;
+            font-size: 18px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Virtual controls visualization (optional debugging) */
+        .touch-zone {
+            position: absolute;
+            bottom: 0;
+            height: 50%;
+            /* visual hint only */
+            width: 50%;
+            /* border: 1px dashed rgba(0,0,0,0.1); */
+        }
+
+        .left {
+            left: 0;
+        }
+
+        .right {
+            right: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/"
+        style="position: fixed; top: 10px; left: 10px; z-index: 1000; padding: 10px 15px; background: rgba(0,0,0,0.7); color: white; border-radius: 8px; text-decoration: none; font-family: sans-serif; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);">🏠
+        Home</a>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <div id="score-display">エラスティック・スティックマン</div>
+    </div>
+
+    <div id="tutorial">
+        <h1>準備はいい？</h1>
+        <p>👈 左側 / <strong>A・Dキー</strong>: <strong>移動</strong></p>
+        <p>👉 右側 / <strong>マウス</strong>: <strong>フック</strong></p>
+        <p>👆 上スワイプ / <strong>スペースキー</strong>: <strong>ジャンプ</strong></p>
+        <button id="start-btn">ゲームスタート</button>
+    </div>
+
+    <script>
+        /**
+         * Elastic Stickman Game Engine
+         * optimized for mobile touch controls.
+         * 
+         * Controls Update:
+         * - Left Stick: Move/Swing (Horizontal) + Climb/Reel (Vertical)
+         * - Right Tap: Hook
+         */
+
+        // --- Constants & Config ---
+        const CONSTANTS = {
+            GRAVITY: 0.5,
+            FRICTION: 0.85,
+            AIR_FRICTION: 0.99,
+            MOVE_SPEED: 0.5,
+            JUMP_FORCE: 12,
+            HOOK_SPEED: 40,
+            HOOK_RANGE: 400,
+            HOOK_REEL_SPEED: 5, // Speed of climbing up/down
+            PLAYER_RADIUS: 10,
+            BOX_SIZE: 30,
+            MAX_VELOCITY: 25,
+        };
+
+        // --- Game State ---
+        const state = {
+            running: false,
+            width: 0,
+            height: 0,
+            camera: { x: 0, y: 0 },
+            player: {
+                x: 100, y: 300,
+                vx: 0, vy: 0,
+                grounded: false,
+                hook: {
+                    active: false,
+                    x: 0, y: 0, // Hook tip position
+                    length: 0,
+                    target: null, // Object hooked to (optional)
+                }
+            },
+            input: {
+                moveX: 0,
+                moveY: 0, // For climbing
+                jump: false,
+                aimX: 0, aimY: 0,
+                hooking: false,
+                touches: {}
+            },
+            level: {
+                walls: [],
+                boxes: [],
+                spikes: [],
+                goal: null
+            },
+            currentLevelIdx: 0
+        };
+
+        // --- Init & Event Listeners ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const startBtn = document.getElementById('start-btn');
+        const tutorial = document.getElementById('tutorial');
+
+        function resize() {
+            state.width = window.innerWidth;
+            state.height = window.innerHeight;
+            canvas.width = state.width;
+            canvas.height = state.height;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        startBtn.addEventListener('click', () => {
+            tutorial.classList.add('hidden');
+            initLevel();
+            state.running = true;
+            requestAnimationFrame(loop);
+        });
+
+        // --- Input Handling ---
+        // We handle multi-touch manually to support moving + aiming simultaneously.
+        const touchState = {
+            leftId: null,
+            leftStartX: 0,
+            leftStartY: 0, // Added for Y axis
+            rightId: null
+        };
+
+        window.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                const halfWidth = state.width / 2;
+
+                if (t.clientX < halfWidth) {
+                    // Left Side: Movement
+                    if (touchState.leftId === null) {
+                        touchState.leftId = t.identifier;
+                        touchState.leftStartX = t.clientX;
+                        touchState.leftStartY = t.clientY;
+                    }
+                } else {
+                    // Right Side: Hook / Action
+                    if (touchState.rightId === null) {
+                        touchState.rightId = t.identifier;
+                        state.input.hooking = true;
+                        // Hook towards touch point (world space)
+                        const worldX = t.clientX + state.camera.x;
+                        const worldY = t.clientY + state.camera.y;
+                        fireHook(worldX, worldY);
+                    }
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+
+                if (t.identifier === touchState.leftId) {
+                    const deltaX = t.clientX - touchState.leftStartX;
+                    state.input.moveX = Math.max(-1, Math.min(1, deltaX / 50));
+
+                    // Vertical drag for climbing
+                    // We need a startY for this... let's hack it or add it.
+                    // Ideally we track startY too.
+                    const deltaY = t.clientY - touchState.leftStartY;
+                    state.input.moveY = Math.max(-1, Math.min(1, deltaY / 50));
+                } else if (t.identifier === touchState.rightId) {
+                    // Update hook target potentially? 
+                    // For now, simpler mechanic: Hook fires once on touch.
+                    // Maybe dragging right side aims? Let's keep it simple: Touch = Shoot to that point.
+                    // If already hooked, maybe swing?
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            handleTouchEnd(e.changedTouches);
+        });
+
+        window.addEventListener('touchcancel', (e) => {
+            handleTouchEnd(e.changedTouches);
+        });
+
+        function handleTouchEnd(touches) {
+            for (let i = 0; i < touches.length; i++) {
+                const t = touches[i];
+                if (t.identifier === touchState.leftId) {
+                    touchState.leftId = null;
+                    // state.input.moveX = 0; // Handled in updateInput
+
+                    // Check for tap/double tap on left? (Jump logic optional here)
+                }
+                if (t.identifier === touchState.rightId) {
+                    touchState.rightId = null;
+                    state.input.hooking = false;
+                    retractHook();
+                }
+            }
+        }
+
+        // Gesture: Jump detection (Swipe Up or Double Tap anywhere)
+        let lastTap = 0;
+        window.addEventListener('touchstart', (e) => {
+            const now = Date.now();
+            if (now - lastTap < 300) {
+                state.input.jump = true;
+            }
+            lastTap = now;
+        });
+        // Simple swipe up detection
+        let swipeStartY = 0;
+        window.addEventListener('touchstart', e => swipeStartY = e.touches[0].clientY);
+        window.addEventListener('touchmove', e => {
+            const y = e.touches[0].clientY;
+            if (swipeStartY - y > 50 && state.player.grounded) {
+                state.input.jump = true;
+                swipeStartY = y; // Reset to prevent multi-jump triggers
+            }
+        });
+
+        // --- PC Controls (Keyboard & Mouse) ---
+        const keyState = {
+            ArrowLeft: false, a: false,
+            ArrowRight: false, d: false,
+            ArrowUp: false, w: false, " ": false,
+            ArrowDown: false, s: false
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if (keyState.hasOwnProperty(e.key)) keyState[e.key] = true;
+            if (e.key === " " || e.key === "ArrowUp" || e.key === "w") state.input.jump = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keyState.hasOwnProperty(e.key)) keyState[e.key] = false;
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            state.input.hooking = true;
+            const worldX = e.clientX + state.camera.x;
+            const worldY = e.clientY + state.camera.y;
+            fireHook(worldX, worldY);
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            state.input.hooking = false;
+            retractHook();
+        });
+
+        function updateInput() {
+            let kbMoveX = 0;
+            let kbMoveY = 0;
+
+            if (keyState.ArrowLeft || keyState.a) kbMoveX -= 1;
+            if (keyState.ArrowRight || keyState.d) kbMoveX += 1;
+
+            if (keyState.ArrowUp || keyState.w) kbMoveY -= 1;
+            if (keyState.ArrowDown || keyState.s) kbMoveY += 1;
+
+            if (kbMoveX !== 0 || kbMoveY !== 0) {
+                state.input.moveX = kbMoveX;
+                state.input.moveY = kbMoveY;
+            } else if (touchState.leftId === null) {
+                state.input.moveX = 0;
+                state.input.moveY = 0;
+            }
+        }
+
+
+
+        // --- Game Logic ---
+
+        const LEVELS = [
+            // Level 1
+            (h) => ({
+                walls: [
+                    { x: -500, y: h - 50, w: 1000, h: 500 }, // Start Floor
+                    { x: -50, y: -2000, w: 50, h: 4000 }, // Left World Wall
+                    { x: 400, y: h - 450, w: 1000, h: 50 }, // Ceiling
+                    { x: 1300, y: h - 150, w: 400, h: 200 }, // Landing
+                    // Shaft
+                    { x: 1700, y: h - 800, w: 50, h: 1000 },
+                    { x: 1300, y: h - 1000, w: 50, h: 600 },
+                    // Platforms
+                    { x: 1350, y: h - 350, w: 150, h: 20 },
+                    { x: 1550, y: h - 550, w: 150, h: 20 },
+                    { x: 1350, y: h - 750, w: 150, h: 20 },
+                    // Top Area
+                    { x: 1000, y: h - 1000, w: 800, h: 50 },
+                    // Goal Plat
+                    { x: 200, y: h - 900, w: 200, h: 20 }
+                ],
+                spikes: [
+                    { x: 500, y: h - 50, w: 800, h: 50 },
+                    { x: 1500, y: h - 330, w: 200, h: 20 },
+                    { x: 1300, y: h - 730, w: 50, h: 20 }
+                ],
+                boxes: [
+                    { x: 1200, y: h - 1100, w: 40, h: 40, cs: 'lime' },
+                    { x: 1250, y: h - 1100, w: 40, h: 40, cs: 'lime' },
+                ],
+                goal: { x: 300, y: h - 950, r: 30 },
+                start: { x: 100, y: h - 150 }
+            }),
+            // Level 2 (Harder)
+            (h) => ({
+                walls: [
+                    { x: -100, y: h - 50, w: 400, h: 100 }, // Start
+                    { x: -50, y: -2000, w: 50, h: 4000 }, // Left Limit
+                    // Floating islands requiring hook
+                    { x: 400, y: h - 300, w: 50, h: 200 }, // Pillar 1
+                    { x: 700, y: h - 500, w: 50, h: 300 }, // Pillar 2
+                    { x: 1000, y: h - 200, w: 50, h: 400 }, // Pillar 3 (Low)
+                    // High Ceiling to hook
+                    { x: 200, y: h - 800, w: 100, h: 20 },
+                    { x: 600, y: h - 900, w: 100, h: 20 },
+                    { x: 1000, y: h - 1000, w: 100, h: 20 },
+
+                    // Tunnel Section
+                    { x: 1400, y: h - 600, w: 20, h: 600 }, // Entrance Wall
+                    { x: 1400, y: h - 800, w: 600, h: 20 }, // Tunnel Ceiling
+                    { x: 1400, y: h - 600, w: 600, h: 20 }, // Tunnel Floor
+                ],
+                spikes: [
+                    { x: 300, y: h - 10, w: 1500, h: 30 }, // Floor is Lava
+                    { x: 390, y: h - 320, w: 70, h: 20 }, // On Pillar 1
+                    { x: 690, y: h - 520, w: 70, h: 20 }, // On Pillar 2
+                    // Tunnel Spikes
+                    { x: 1600, y: h - 620, w: 20, h: 20 },
+                    { x: 1800, y: h - 780, w: 20, h: 20 }, // Ceiling spike
+                ],
+                boxes: [],
+                goal: { x: 1900, y: h - 700, r: 30 },
+                start: { x: 50, y: h - 150 }
+            })
+        ];
+
+        function initLevel() {
+            loadLevel(0);
+        }
+
+        function loadLevel(idx) {
+            state.currentLevelIdx = idx;
+            const h = state.height;
+            const levelData = LEVELS[idx](h);
+
+            state.level = levelData;
+            state.player.x = levelData.start.x;
+            state.player.y = levelData.start.y;
+            state.player.vx = 0;
+            state.player.vy = 0;
+            state.player.hook.active = false;
+        }
+
+        function fireHook(worldX, worldY) {
+            if (state.player.hook.active) return; // Already hooking
+            state.player.hook.active = true;
+            state.player.hook.x = state.player.x;
+            state.player.hook.y = state.player.y;
+
+            // Raycast/Shoot direction
+            const dx = worldX - state.player.x;
+            const dy = worldY - state.player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // Range Check
+            if (dist > CONSTANTS.HOOK_RANGE) {
+                // Determine miss or limiting
+                // Just limiting logic:
+                // state.player.hook.x = state.player.x + (dx / dist) * CONSTANTS.HOOK_RANGE;
+                // state.player.hook.y = state.player.y + (dy / dist) * CONSTANTS.HOOK_RANGE;
+                // return; // Miss
+
+                // Or let them shoot but it fizzles at max range
+            }
+
+            // Limit raycast distance
+            const castDist = Math.min(dist, CONSTANTS.HOOK_RANGE);
+            const steps = castDist / 10;
+            let hit = false;
+
+            for (let i = 0; i < steps; i++) {
+                const tx = state.player.x + (dx / dist) * (i * 10);
+                const ty = state.player.y + (dy / dist) * (i * 10);
+                // Check walls
+                for (let w of state.level.walls) {
+                    if (pointInRect(tx, ty, w)) {
+                        state.player.hook.x = tx;
+                        state.player.hook.y = ty;
+                        state.player.hook.length = Math.sqrt(
+                            Math.pow(tx - state.player.x, 2) + Math.pow(ty - state.player.y, 2)
+                        );
+                        hit = true;
+                        break;
+                    }
+                }
+                if (hit) break;
+            }
+
+            if (!hit) {
+                // Missed, set to max reach or clicked point
+                state.player.hook.x = worldX;
+                state.player.hook.y = worldY;
+                state.player.hook.active = false; // Fizzle immediately if miss
+            }
+        }
+
+        function retractHook() {
+            state.player.hook.active = false;
+        }
+
+
+        function updatePhysics() {
+            updateInput();
+            const p = state.player;
+
+            // Sub-stepping to prevent tunneling
+            const SUBSTEPS = 4;
+            const dt = 1 / SUBSTEPS;
+
+            for (let step = 0; step < SUBSTEPS; step++) {
+                // Movement Forces
+                if (state.input.jump && p.grounded) {
+                    p.vy = -CONSTANTS.JUMP_FORCE;
+                    p.grounded = false;
+                    state.input.jump = false;
+                }
+
+                // Horizontal Movement (scaled by dt)
+                p.vx += (state.input.moveX * CONSTANTS.MOVE_SPEED) * dt;
+
+                // Gravity (scaled by dt)
+                p.vy += CONSTANTS.GRAVITY * dt;
+
+                // Hook Physics
+                if (p.hook.active) {
+                    const dx = p.hook.x - p.x;
+                    const dy = p.hook.y - p.y;
+                    const dx2 = dx * dx;
+                    const dy2 = dy * dy;
+                    const currentDist = Math.sqrt(dx2 + dy2);
+
+                    if (currentDist > 0) {
+                        const dirX = dx / currentDist;
+                        const dirY = dy / currentDist;
+
+                        if (p.grounded) {
+                            // Slingshot: strong pull if far
+                            // Tension builds up, but apply it carefully
+                            if (currentDist > 50) {
+                                const pull = CONSTANTS.HOOK_PULL_FORCE * 2 * dt;
+                                p.vx += dirX * pull;
+                                p.vy += dirY * pull;
+                            }
+                        } else {
+                            // Manual Reeling
+                            if (state.input.moveY !== 0) {
+                                // Apply reeling per frame, not per substep to keep speed consistent?
+                                // Actually, applying it per substep means we need to scale speed by dt
+                                p.hook.length += (state.input.moveY * CONSTANTS.HOOK_REEL_SPEED) * dt;
+                                if (p.hook.length < 20) p.hook.length = 20;
+                                if (p.hook.length > CONSTANTS.HOOK_RANGE) p.hook.length = CONSTANTS.HOOK_RANGE;
+                            }
+
+                            // Constraint with velocity modification
+                            if (currentDist > p.hook.length) {
+                                // 1. Positional soft correction
+                                const correction = (currentDist - p.hook.length) * 0.5;
+                                p.vx += dirX * correction * dt;
+                                p.vy += dirY * correction * dt;
+
+                                // 2. Velocity damping constraint
+                                const dot = p.vx * dirX + p.vy * dirY;
+                                if (dot < 0) { // Moving away
+                                    // Remove component of velocity moving away
+                                    // We do this fully to maximize rigidity
+                                    // But maybe scale by factor if it feels too hard?
+                                    // Let's keep it hard constraint for "rope" feel
+                                    p.vx -= dirX * dot;
+                                    p.vy -= dirY * dot;
+                                }
+                            }
+
+                            // Swing Force
+                            if (state.input.moveX !== 0 && !p.grounded) {
+                                const perpX = -dirY;
+                                const perpY = dirX;
+                                const swing = 0.5 * dt;
+                                p.vx += perpX * swing * state.input.moveX;
+                                p.vy += perpY * swing * state.input.moveX;
+                            }
+                        }
+                    }
+                }
+
+                // Friction
+                if (p.grounded) {
+                    // Exponential decay approximation: val *= pow(friction, dt)? 
+                    // Simple multiplication works if close to 1
+                    // p.vx *= CONSTANTS.FRICTION; // This is too strong per step
+                    // Adjusted friction for substeps: F ^ (1/substeps)
+                    // Let's just apply linear damping or tweaked value
+                    p.vx *= Math.pow(CONSTANTS.FRICTION, dt);
+                } else {
+                    p.vx *= Math.pow(CONSTANTS.AIR_FRICTION, dt);
+                }
+
+                // Apply Velocity (scaled by dt implicitly? No, velocity is per frame units usually)
+                // If we treat vx/vy as "pixels per frame", then x += vx * dt
+                // But wait, our forces added to vx were also scaled by dt?
+                // Yes: a += F/m * dt.  v += a.  x += v * dt.
+                // Original code: p.vx += force; p.x += p.vx; (Symplectic Euler)
+                // New code: p.vy += gravity * dt; p.x += p.vx * dt; (if vx is pixels/frame)
+
+                // WAIT. If I scale gravity by dt, vx accumulates slower. 
+                // Then if I scale p.x += p.vx * dt, it moves WAY slower.
+                // Standard Euler: 
+                // v += a * dt
+                // x += v * dt
+
+                // My constants (Gravity=0.5) were tuned for 1 step per frame.
+                // So "Gravity per frame" = 0.5.
+                // "Gravity per second" (60fps) = 30.
+
+                // Let's keep vx/vy as "pixels per frame" units for simplicity.
+                // Then update logic:
+                // p.vy += CONSTANTS.GRAVITY * dt; // Add portion of gravity
+                // p.x += p.vx * dt; // Move portion of velocity
+
+                // Friction needs care. 0.85 per frame -> 0.85^(1/4) per step.
+
+                // Let's adhere to "velocity is pixels/frame".
+
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+
+                // Collision Detection (Walls)
+                p.grounded = false;
+                for (let w of state.level.walls) {
+                    resolveRectCollision(p, w);
+                }
+
+                // Death (Spikes) check per step
+                if (p.y > state.height + 500) { reset(); return; }
+                for (let s of state.level.spikes) {
+                    if (pointInRect(p.x, p.y, s)) { reset(); return; }
+                }
+
+                // Goal check per step
+                if (state.level.goal) {
+                    const g = state.level.goal;
+                    const dSq = Math.pow(p.x - g.x, 2) + Math.pow(p.y - g.y, 2);
+                    if (dSq < Math.pow(g.r + CONSTANTS.PLAYER_RADIUS, 2)) {
+                        if (state.currentLevelIdx < LEVELS.length - 1) {
+                            alert("ステージクリア！ 次のレベルへ！");
+                            loadLevel(state.currentLevelIdx + 1);
+                            return;
+                        } else {
+                            alert("全ステージクリア！ おめでとう！");
+                            loadLevel(0);
+                            return;
+                        }
+                    }
+                }
+            } // end substeps
+
+            // Camera follow (once per frame)
+            state.camera.x += (p.x - state.camera.x - state.width * 0.3) * 0.1;
+            const targetCamY = p.y - state.height * 0.6;
+            state.camera.y += (targetCamY - state.camera.y) * 0.1;
+        }
+
+        function resolveRectCollision(p, r) {
+            // Simple AABB-Circle approximate
+            // Find closest point on rect to circle center
+            const closestX = Math.max(r.x, Math.min(p.x, r.x + r.w));
+            const closestY = Math.max(r.y, Math.min(p.y, r.y + r.h));
+
+            const dx = p.x - closestX;
+            const dy = p.y - closestY;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq < CONSTANTS.PLAYER_RADIUS * CONSTANTS.PLAYER_RADIUS) {
+                const dist = Math.sqrt(distSq);
+                const overlap = CONSTANTS.PLAYER_RADIUS - dist;
+
+                // Normalize impulse
+                let nx = dx / dist;
+                let ny = dy / dist;
+                if (dist === 0) { nx = 0; ny = -1; } // Inside? Push up
+
+                p.x += nx * overlap;
+                p.y += ny * overlap;
+
+                // Stop velocity in normal direction
+                if (ny < -0.5) {
+                    p.grounded = true;
+                    p.vy = 0; // consistent ground behavior
+                }
+            }
+        }
+
+        function pointInRect(x, y, r) {
+            return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+        }
+
+        function reset() {
+            loadLevel(state.currentLevelIdx);
+        }
+
+        // --- Render ---
+        function loop() {
+            if (!state.running) return;
+
+            updatePhysics();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function draw() {
+            // Clear
+            ctx.fillStyle = "#f0f0f0";
+            ctx.fillRect(0, 0, state.width, state.height);
+
+            ctx.save();
+            // Apply Camera
+            ctx.translate(-state.camera.x, -state.camera.y);
+
+            // Grid (optional background detail)
+            ctx.strokeStyle = "#e0e0e0";
+            ctx.beginPath();
+            for (let x = Math.floor(state.camera.x / 50) * 50; x < state.camera.x + state.width; x += 50) {
+                ctx.moveTo(x, state.camera.y);
+                ctx.lineTo(x, state.camera.y + state.height);
+            }
+            ctx.stroke();
+
+            // Walls
+            ctx.fillStyle = "#222";
+            for (let w of state.level.walls) {
+                ctx.fillRect(w.x, w.y, w.w, w.h);
+            }
+
+            // Spikes
+            ctx.fillStyle = "#e74c3c";
+            for (let s of state.level.spikes) {
+                ctx.beginPath();
+                ctx.moveTo(s.x, s.y + s.h);
+                ctx.lineTo(s.x + s.w / 2, s.y);
+                ctx.lineTo(s.x + s.w, s.y + s.h);
+                ctx.fill();
+            }
+
+            // Boxes
+            ctx.fillStyle = "#2ecc71";
+            for (let b of state.level.boxes) {
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+            }
+
+            // Goal
+            if (state.level.goal) {
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath();
+                ctx.arc(state.level.goal.x, state.level.goal.y, state.level.goal.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#f39c12";
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            // Hook Line
+            if (state.player.hook.active) {
+                ctx.strokeStyle = "#555";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(state.player.x, state.player.y);
+                ctx.lineTo(state.player.hook.x, state.player.hook.y);
+                ctx.stroke();
+
+                // Anchor point
+                ctx.fillStyle = "#333";
+                ctx.beginPath();
+                ctx.arc(state.player.hook.x, state.player.hook.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Player
+            ctx.fillStyle = "#333";
+            ctx.beginPath();
+            ctx.arc(state.player.x, state.player.y, CONSTANTS.PLAYER_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            // Eye
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(state.player.x + (state.input.moveX * 4), state.player.y - 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+
+            ctx.restore();
+        }
+
+    </script>
+</body>
+
+</html>

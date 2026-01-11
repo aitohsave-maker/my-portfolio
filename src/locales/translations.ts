@@ -10,12 +10,10 @@ export const translations = {
     },
     about: {
       title: "About Me",
+      button: "View Profile & Other Works",
+      close: "Close Profile",
       description1: "With over 10 years of experience in the mechanical design and development industry, I have cultivated a unique blend of engineering and software skills. I initiated and developed internal software solutions to streamline business operations, gaining practical programming expertise along the way.",
-      description2: "Currently, I am focused on exploring the potential of Generative AI, aiming to stay at the forefront of this technological revolution. This portfolio showcases projects created through the collaborative power of human creativity and AI assistant."
-    },
-    works: {
-      title: "Selected Works",
-      description: "A collection of projects ranging from business automation tools to interactive games, built with modern technology and AI support.",
+      description2: "Currently, I am focused on exploring the potential of Generative AI, aiming to stay at the forefront of this technological revolution. This portfolio showcases projects created through the collaborative power of human creativity and AI assistant.",
       items: [
         {
           id: 1,
@@ -30,6 +28,19 @@ export const translations = {
           category: "Engineering Tool",
           description: "Plugins and VBA macros developed to extend 2D/3DCAD functionalities, enhancing design engineering productivity.",
           link: "#"
+        }
+      ]
+    },
+    works: {
+      title: "Selected Works",
+      description: "A collection of projects ranging from business automation tools to interactive games, built with modern technology and AI support.",
+      items: [
+        {
+          id: 6,
+          title: "Elastic Stickman",
+          category: "Latest Game",
+          description: "A physics-based action game where you control a stickman with elastic limbs.",
+          link: "/games/elastic-stickman/index.html"
         },
         {
           id: 3,
@@ -82,12 +93,10 @@ export const translations = {
     },
     about: {
       title: "私について",
+      button: "プロフィールとその他の実績を見る",
+      close: "閉じる",
       description1: "約10年にわたり、機械設計・開発企業にてキャリアを積んでまいりました。本業の傍ら、業務効率化を目的とした社内用ソフトウェアの開発を主導し、実務の中でプログラミングスキルを磨いてきました。",
-      description2: "現在は、急速に進化する生成AI技術に強い関心を持ち、「AIと共創する開発」をテーマに学習と実践を重ねています。本サイトでは、AIのサポートを最大限に活用しながら制作したプロダクトをご紹介いたします。"
-    },
-    works: {
-      title: "制作実績",
-      description: "業務効率化ツールからエンターテインメントまで、技術とAIを活用した多様なプロジェクト。",
+      description2: "現在は、急速に進化する生成AI技術に強い関心を持ち、「AIと共創する開発」をテーマに学習と実践を重ねています。本サイトでは、AIのサポートを最大限に活用しながら制作したプロダクトをご紹介いたします。",
       items: [
         {
           id: 1,
@@ -102,6 +111,19 @@ export const translations = {
           category: "設計支援ツール",
           description: "2D/3DCADの機能を拡張するプラグインおよびExcelマクロ。設計開発プロセスの工数短縮に貢献しました。",
           link: "#"
+        }
+      ]
+    },
+    works: {
+      title: "制作実績",
+      description: "業務効率化ツールからエンターテインメントまで、技術とAIを活用した多様なプロジェクト。",
+      items: [
+        {
+          id: 6,
+          title: "エラスティック・スティックマン",
+          category: "最新ゲーム",
+          description: "自在に伸びる腕を駆使してゴールを目指す、爽快なワイヤーアクションゲーム。",
+          link: "/games/elastic-stickman/index.html"
         },
         {
           id: 3,

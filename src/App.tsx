@@ -11,8 +11,8 @@ function App() {
       <main className="min-h-screen bg-white relative">
         <LanguageSwitcher />
         <Hero />
-        <About />
         <Works />
+        <About />
         <Contact />
       </main>
     </LanguageProvider>
