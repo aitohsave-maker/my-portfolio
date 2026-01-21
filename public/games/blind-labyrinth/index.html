@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blind Labyrinth - Web Prototype</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Outfit:wght@600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <a href="/"
+        style="position: fixed; top: 10px; left: 10px; z-index: 1000; padding: 10px 15px; background: rgba(0,0,0,0.7); color: white; border-radius: 8px; text-decoration: none; font-family: sans-serif; font-weight: bold; border: 1px solid rgba(255,255,255,0.3); backdrop-filter: blur(4px);">🏠
+        Home</a>
+    <div class="container">
+        <header>
+            <h1>Blind Labyrinth</h1>
+            <p>数字をヒントに、暗闇の迷路を抜け出せ。</p>
+        </header>
+
+        <div id="game-container">
+            <div id="game-menu">
+                <div class="menu-group">
+                    <label>Mode:</label>
+                    <button class="menu-btn active" id="mode-labyrinth">Labyrinth</button>
+                    <button class="menu-btn" id="mode-classic">Classic</button>
+                </div>
+                <div class="menu-group" id="difficulty-group" style="display: none;">
+                    <label>Level:</label>
+                    <select id="difficulty-select">
+                        <option value="easy">Easy (10x10)</option>
+                        <option value="medium" selected>Medium (16x16)</option>
+                        <option value="hard">Hard (20x20)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div id="game-message">Good Luck, Explorer.</div>
+                <div class="stats">
+                    <span id="hp-display">❤️ HP: 3</span>
+                    <span id="scans-display">📡 Scans: 3</span>
+                </div>
+            </div>
+
+            <div id="maze-board">
+                <!-- JSでセルを生成 -->
+            </div>
+
+            <div class="controls-ui">
+                <div class="d-pad">
+                    <button class="d-btn up" id="move-up">↑</button>
+                    <div class="d-pad-mid">
+                        <button class="d-btn left" id="move-left">←</button>
+                        <button class="d-btn down" id="move-down">↓</button>
+                        <button class="d-btn right" id="move-right">→</button>
+                    </div>
+                </div>
+                <div class="control-extra">
+                    <button id="flag-mode-btn">Flag Mode: OFF</button>
+                    <button id="scan-btn">📡 Scan Surroundings</button>
+                    <button id="reset-btn">Reset Game</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="game-info">
+            <p><strong>PC:</strong> WASD or Arrow Keys | <strong>Mobile:</strong> Tap D-Pad or Cells</p>
+            <p># = Wall (Deadly!) | Numbers = Count of walls in 8 surrounding tiles</p>
+        </footer>
+    </div>
+    <script src="game.js"></script>
+</body>
+
+</html>

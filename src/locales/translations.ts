@@ -36,6 +36,13 @@ export const translations = {
       description: "A collection of projects ranging from business automation tools to interactive games, built with modern technology and AI support.",
       items: [
         {
+          id: 7,
+          title: "Blind Labyrinth",
+          category: "Latest Game",
+          description: "A logic-based maze crawler where numbers are your only guide through the darkness.",
+          link: "/games/blind-labyrinth/index.html"
+        },
+        {
           id: 6,
           title: "Elastic Stickman",
           category: "Latest Game",
@@ -118,6 +125,13 @@ export const translations = {
       title: "制作実績",
       description: "業務効率化ツールからエンターテインメントまで、技術とAIを活用した多様なプロジェクト。",
       items: [
+        {
+          id: 7,
+          title: "ブラインド・ラビリンス",
+          category: "最新ゲーム",
+          description: "数字をヒントに暗闇の迷路を解き明かす、思考型ローグライク・パズル。",
+          link: "/games/blind-labyrinth/index.html"
+        },
         {
           id: 6,
           title: "エラスティック・スティックマン",
