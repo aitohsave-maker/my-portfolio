@@ -12,6 +12,7 @@ class BlindLabyrinth {
         this.goalScanCount = 0;
         this.isScanActive = false;
         this.scanTimer = null;
+        this.minesLeft = 0;
 
         this.init();
     }
@@ -44,6 +45,7 @@ class BlindLabyrinth {
             this.chaosCellCount = parseInt(document.getElementById('chaos-cells').value) || 50;
             this.chaosMineCountValue = parseInt(document.getElementById('chaos-mines').value) || 8;
             this.size = 20;
+            this.minesCount = this.chaosMineCountValue;
         } else if (this.mode === 'labyrinth') {
             const configs = {
                 easy: { size: 30, minDist: 10, maxDist: 15 },
@@ -65,6 +67,7 @@ class BlindLabyrinth {
         this.flags = Array(this.size).fill().map(() => Array(this.size).fill(false));
         this.chaosNodes = [];
         this.isGameOver = false;
+        this.minesLeft = this.minesCount || 0;
 
         if (this.mode === 'labyrinth') {
             this.generateLabyrinthMines();
@@ -78,6 +81,7 @@ class BlindLabyrinth {
             this.generateChaosLayout();
             this.calculateChaosHints();
             this.revealChaosSafeNodes();
+            this.minesLeft = this.chaosNodes.filter(n => n.isMine).length;
         } else {
             this.generateClassicMines();
             this.calculateHints();
@@ -147,6 +151,94 @@ class BlindLabyrinth {
         }
     }
 
+    // === CHAOS MODE METHODS ===
+    generateChaosLayout() {
+        this.chaosNodes = [];
+        const visited = new Set();
+        const queue = [{ x: 0, y: 0 }];
+        visited.add('0,0');
+
+        while (this.chaosNodes.length < this.chaosCellCount && queue.length > 0) {
+            const idx = Math.floor(Math.random() * queue.length);
+            const { x, y } = queue.splice(idx, 1)[0];
+
+            const isMine = this.chaosNodes.length > 5 && Math.random() < (this.chaosMineCountValue / this.chaosCellCount);
+            this.chaosNodes.push({ gx: x, gy: y, isMine, isRevealed: false, isFlagged: false, hint: 0, neighbors: [] });
+
+            const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]];
+            dirs.sort(() => Math.random() - 0.5);
+            for (const [dx, dy] of dirs) {
+                const nx = x + dx, ny = y + dy;
+                const key = `${nx},${ny}`;
+                if (!visited.has(key) && this.chaosNodes.length + queue.length < this.chaosCellCount * 1.5) {
+                    visited.add(key);
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+        }
+
+        // Ensure exact mine count
+        let mineCount = this.chaosNodes.filter(n => n.isMine).length;
+        while (mineCount < this.chaosMineCountValue) {
+            const candidates = this.chaosNodes.filter(n => !n.isMine && n !== this.chaosNodes[0]);
+            if (candidates.length === 0) break;
+            candidates[Math.floor(Math.random() * candidates.length)].isMine = true;
+            mineCount++;
+        }
+        while (mineCount > this.chaosMineCountValue) {
+            const mines = this.chaosNodes.filter(n => n.isMine);
+            if (mines.length === 0) break;
+            mines[Math.floor(Math.random() * mines.length)].isMine = false;
+            mineCount--;
+        }
+
+        // Build neighbor relationships
+        this.chaosNodes.forEach((node, i) => {
+            this.chaosNodes.forEach((other, j) => {
+                if (i === j) return;
+                const dist = Math.abs(node.gx - other.gx) + Math.abs(node.gy - other.gy);
+                if (dist === 1 || (Math.abs(node.gx - other.gx) === 1 && Math.abs(node.gy - other.gy) === 1)) {
+                    node.neighbors.push(j);
+                }
+            });
+        });
+    }
+
+    calculateChaosHints() {
+        this.chaosNodes.forEach(node => {
+            if (node.isMine) return;
+            node.hint = node.neighbors.filter(idx => this.chaosNodes[idx].isMine).length;
+        });
+    }
+
+    revealChaosSafeNodes() {
+        // Reveal the first node only
+        if (this.chaosNodes.length > 0) {
+            this.chaosNodes[0].isRevealed = true;
+            if (this.chaosNodes[0].hint === 0) {
+                this.revealChaosCell(0);
+            }
+        }
+    }
+
+    revealChaosCell(idx) {
+        const node = this.chaosNodes[idx];
+        if (!node || node.isRevealed) return;
+        node.isRevealed = true;
+        if (node.isFlagged) {
+            node.isFlagged = false;
+            this.minesLeft++;
+            this.updateStats();
+        }
+        if (!node.isMine && node.hint === 0) {
+            node.neighbors.forEach(ni => {
+                if (!this.chaosNodes[ni].isRevealed && !this.chaosNodes[ni].isFlagged) {
+                    this.revealChaosCell(ni);
+                }
+            });
+        }
+    }
+
     calculateHints() {
         for (let y = 0; y < this.size; y++) {
             for (let x = 0; x < this.size; x++) {
@@ -167,7 +259,11 @@ class BlindLabyrinth {
     revealCell(x, y) {
         if (x < 0 || x >= this.size || y < 0 || y >= this.size || this.revealed[y][x]) return;
         this.revealed[y][x] = true;
-        this.flags[y][x] = false;
+        if (this.flags[y][x]) {
+            this.flags[y][x] = false;
+            this.minesLeft++;
+            this.updateStats();
+        }
         if (this.grid[y][x] === 0 && this.hints[y][x] === 0) {
             for (let dy = -1; dy <= 1; dy++) {
                 for (let dx = -1; dx <= 1; dx++) {
@@ -272,6 +368,8 @@ class BlindLabyrinth {
     toggleFlag(x, y) {
         if (this.isGameOver || this.revealed[y][x]) return;
         this.flags[y][x] = !this.flags[y][x];
+        this.minesLeft += this.flags[y][x] ? -1 : 1;
+        this.updateStats();
         this.updateBoard();
     }
 
@@ -291,7 +389,7 @@ class BlindLabyrinth {
             for (let dx = -r; dx <= r; dx++) {
                 const nx = this.playerPos.x + dx, ny = this.playerPos.y + dy;
                 if (nx >= 0 && nx < this.size && ny >= 0 && ny < this.size) {
-                    this.revealed[ny][nx] = true; this.flags[ny][nx] = false;
+                    this.revealCell(nx, ny);
                 }
             }
         }
@@ -307,20 +405,35 @@ class BlindLabyrinth {
             }
         }
         if (revealedSafe === totalSafe) {
-            this.isGameOver = true; this.updateMessage("🎉 VICTORY! You cleared the field!"); this.updateBoard();
+            this.isGameOver = true;
+            this.stopTimer();
+            this.saveHighScore(); // Classic uses time record
+            this.updateMessage("🎉 VICTORY! You cleared the field!");
+            this.updateBoard();
         }
     }
 
     handleCellClick(x, y) {
         if (this.isGameOver || this.flags[y][x]) return;
+        if (this.seconds === 0 && !this.timer) this.startTimer();
         if (this.grid[y][x] === 1) {
-            this.isGameOver = true; this.revealAll(); this.updateMessage("💥 爆発！GAME OVER.");
+            this.isGameOver = true; this.stopTimer(); this.revealAll(); this.updateMessage("💥 爆発！GAME OVER.");
         } else this.revealCell(x, y);
         this.updateBoard();
     }
 
     updateUI() {
         const isLab = this.mode === 'labyrinth', isChaos = this.mode === 'chaos', isClassic = this.mode === 'classic';
+
+        // Update header title and subtitle based on mode
+        const titles = {
+            labyrinth: { title: "Blind Labyrinth", subtitle: "数字をヒントに、暗闇の迷路を抜け出せ。" },
+            classic: { title: "Classic Minesweeper", subtitle: "地雷を避けて、全てのマスを開け。" },
+            chaos: { title: "Chaos Mode", subtitle: "不規則なマップを攻略せよ。" }
+        };
+        const headerData = titles[this.mode] || titles.labyrinth;
+        document.getElementById('game-title').textContent = headerData.title;
+        document.getElementById('game-subtitle').textContent = headerData.subtitle;
 
         document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
         const activeBtn = document.getElementById(`mode-${this.mode}`);
@@ -336,14 +449,27 @@ class BlindLabyrinth {
         document.getElementById('plant-flag-btn').style.display = isLab ? 'inline-block' : 'none';
         document.getElementById('scan-btn').style.display = isLab ? 'inline-block' : 'none';
 
-        document.getElementById('highscore-bar').style.display = isLab ? 'flex' : 'none';
+        document.getElementById('highscore-bar').style.display = (isLab || isClassic) ? 'flex' : 'none';
         this.updateStats();
     }
 
     updateStats() {
+        document.getElementById('hp-display').style.display = (this.mode === 'labyrinth') ? 'inline-block' : 'none';
         document.getElementById('hp-display').textContent = `❤️ HP: ${this.hp || 0}`;
+
+        document.getElementById('bombs-display').style.display = (this.mode !== 'labyrinth') ? 'inline-block' : 'none';
+        document.getElementById('bombs-display').textContent = `💣 Bombs: ${this.minesLeft}`;
+
+        document.getElementById('scans-display').style.display = (this.mode === 'labyrinth') ? 'inline-block' : 'none';
         document.getElementById('scans-display').textContent = `📡 Area Scans: ${this.scans || 0}`;
-        document.getElementById('hp-display').parentElement.style.display = (this.mode === 'labyrinth') ? 'flex' : 'none';
+
+        document.getElementById('timer-display').textContent = `⏱️ ${this.formatTime(this.seconds)}`;
+    }
+
+    formatTime(s) {
+        const min = Math.floor(s / 60).toString().padStart(2, '0');
+        const sec = (s % 60).toString().padStart(2, '0');
+        return `${min}:${sec}`;
     }
 
     updateBoard() {
@@ -358,11 +484,9 @@ class BlindLabyrinth {
         const renderSize = view ? 8 : this.size;
         board.className = view ? 'viewport-8' : `size-${this.size}`;
 
-        // Fix grid columns for non-viewport modes
         if (!view) {
             board.style.gridTemplateColumns = `repeat(${this.size}, var(--cell-size))`;
             board.style.gridTemplateRows = `repeat(${this.size}, var(--cell-size))`;
-            // Decrease cell size for large classic grids to prevent overflow
             if (this.size > 16) board.style.setProperty('--cell-size', 'min(4vw, 25px)');
             else board.style.setProperty('--cell-size', 'min(8vw, 40px)');
         } else {
@@ -434,13 +558,30 @@ class BlindLabyrinth {
 
     addCellInteractions(cell, x, y) {
         let touchTimer;
+        let isLongPress = false;
+
         cell.addEventListener('contextmenu', (e) => { e.preventDefault(); this.toggleFlag(x, y); });
-        cell.addEventListener('touchstart', () => {
-            touchTimer = setTimeout(() => { this.toggleFlag(x, y); if (navigator.vibrate) navigator.vibrate(50); }, 500);
+
+        cell.addEventListener('touchstart', (e) => {
+            isLongPress = false;
+            touchTimer = setTimeout(() => {
+                isLongPress = true;
+                this.toggleFlag(x, y);
+                if (navigator.vibrate) navigator.vibrate(60);
+            }, 500);
         }, { passive: true });
-        cell.addEventListener('touchend', () => clearTimeout(touchTimer));
-        cell.addEventListener('touchmove', () => clearTimeout(touchTimer));
-        cell.addEventListener('click', () => {
+
+        cell.addEventListener('touchmove', (e) => { clearTimeout(touchTimer); });
+
+        cell.addEventListener('touchend', (e) => {
+            clearTimeout(touchTimer);
+            if (isLongPress) {
+                e.preventDefault(); // Stop click if long pressed
+            }
+        });
+
+        cell.addEventListener('click', (e) => {
+            if (isLongPress) return;
             if (this.flagModeActive) { this.toggleFlag(x, y); return; }
             if (this.flags[y][x]) return;
             if (this.mode === 'classic') this.handleCellClick(x, y);
@@ -453,17 +594,28 @@ class BlindLabyrinth {
 
     addNodeInteractions(cell, idx) {
         let touchTimer;
+        let isLongPress = false;
+
         cell.addEventListener('contextmenu', (e) => { e.preventDefault(); this.toggleChaosFlag(idx); });
+
         cell.addEventListener('touchstart', () => {
-            touchTimer = setTimeout(() => { this.toggleChaosFlag(idx); if (navigator.vibrate) navigator.vibrate(50); }, 500);
+            isLongPress = false;
+            touchTimer = setTimeout(() => {
+                isLongPress = true;
+                this.toggleChaosFlag(idx);
+                if (navigator.vibrate) navigator.vibrate(60);
+            }, 500);
         }, { passive: true });
+
         cell.addEventListener('touchend', () => clearTimeout(touchTimer));
         cell.addEventListener('touchmove', () => clearTimeout(touchTimer));
+
         cell.addEventListener('click', () => {
+            if (isLongPress) return;
             if (this.flagModeActive || this.isGameOver) { this.toggleChaosFlag(idx); return; }
             if (this.chaosNodes[idx].isFlagged) return;
             if (this.chaosNodes[idx].isMine) {
-                this.isGameOver = true; this.chaosNodes.forEach(n => n.isRevealed = true); this.updateMessage("💥 爆発！GAME OVER.");
+                this.isGameOver = true; this.stopTimer(); this.chaosNodes.forEach(n => n.isRevealed = true); this.updateMessage("💥 爆発！GAME OVER.");
             } else this.revealChaosCell(idx);
             this.updateBoard();
         });
@@ -472,6 +624,8 @@ class BlindLabyrinth {
     toggleChaosFlag(idx) {
         if (this.isGameOver || this.chaosNodes[idx].isRevealed) return;
         this.chaosNodes[idx].isFlagged = !this.chaosNodes[idx].isFlagged;
+        this.minesLeft += this.chaosNodes[idx].isFlagged ? -1 : 1;
+        this.updateStats();
         this.updateBoard();
     }
 
@@ -492,30 +646,42 @@ class BlindLabyrinth {
     stopTimer() { clearInterval(this.timer); this.timer = null; }
 
     updateTimerDisplay() {
-        const min = Math.floor(this.seconds / 60).toString().padStart(2, '0');
-        const sec = (this.seconds % 60).toString().padStart(2, '0');
-        document.getElementById('timer-display').textContent = `⏱️ ${min}:${sec}`;
+        document.getElementById('timer-display').textContent = `⏱️ ${this.formatTime(this.seconds)}`;
     }
 
     saveHighScore() {
-        const key = `lab_highscore_${this.labDifficulty}`;
-        const currentBest = localStorage.getItem(key);
-        if (!currentBest || this.score > parseInt(currentBest)) {
-            localStorage.setItem(key, this.score); this.showHighScore();
+        let key, val;
+        if (this.mode === 'labyrinth') {
+            key = `lab_highscore_${this.labDifficulty}`; val = this.score;
+            const currentBest = localStorage.getItem(key);
+            if (!currentBest || val > parseInt(currentBest)) localStorage.setItem(key, val);
+        } else if (this.mode === 'classic') {
+            key = `classic_besttime_${this.difficulty}`; val = this.seconds;
+            const currentBest = localStorage.getItem(key);
+            if (!currentBest || val < parseInt(currentBest)) localStorage.setItem(key, val);
         }
+        this.showHighScore();
     }
 
     showHighScore() {
-        const key = `lab_highscore_${this.labDifficulty}`;
-        const best = localStorage.getItem(key);
         const display = document.getElementById('highscore-display');
-        display.textContent = `🏆 High Score: ${best || 0}`;
+        if (this.mode === 'labyrinth') {
+            const key = `lab_highscore_${this.labDifficulty}`;
+            const best = localStorage.getItem(key) || 0;
+            display.textContent = `🏆 High Score: ${best}`;
+        } else if (this.mode === 'classic') {
+            const key = `classic_besttime_${this.difficulty}`;
+            const best = localStorage.getItem(key);
+            display.textContent = `🏆 Best Time: ${best ? this.formatTime(best) : '--:--'}`;
+        } else {
+            display.textContent = `🏆 ---`;
+        }
     }
 
     updateMessage(msg) {
         const display = document.getElementById('game-message');
         display.textContent = msg;
-        display.style.color = msg.includes("爆発") || msg.includes("ハズレ") ? "var(--death-color)" : (msg.includes("クリア") ? "var(--victory-color)" : "var(--text-primary)");
+        display.style.color = msg.includes("爆発") || msg.includes("ハズレ") ? "var(--death-color)" : (msg.includes("クリア") || msg.includes("VICTORY") ? "var(--victory-color)" : "var(--text-primary)");
     }
 
     setupListeners() {
