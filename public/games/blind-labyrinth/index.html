@@ -23,31 +23,63 @@
         </header>
 
         <div id="game-container">
-            <div id="game-menu">
-                <div class="menu-group">
-                    <label>Mode:</label>
-                    <button class="menu-btn active" id="mode-labyrinth">Labyrinth</button>
-                    <button class="menu-btn" id="mode-classic">Classic</button>
-                </div>
-                <div class="menu-group" id="difficulty-group" style="display: none;">
-                    <label>Level:</label>
-                    <select id="difficulty-select">
-                        <option value="easy">Easy (10x10)</option>
-                        <option value="medium" selected>Medium (16x16)</option>
-                        <option value="hard">Hard (20x20)</option>
+            <!-- Menu Top: Mode Selection -->
+            <div id="game-menu-top" class="menu-bar">
+                <button class="menu-btn active" id="mode-labyrinth">Labyrinth</button>
+                <button class="menu-btn" id="mode-chaos">Chaos</button>
+                <button class="menu-btn" id="mode-classic">Classic</button>
+            </div>
+
+            <!-- Menu Bottom: Settings Selection -->
+            <div id="game-menu-bottom" class="menu-bar settings-bar">
+                <div id="labyrinth-difficulty-group" class="settings-group">
+                    <label for="lab-difficulty-select">Lab Level:</label>
+                    <select id="lab-difficulty-select">
+                        <option value="easy">Easy (30x30)</option>
+                        <option value="medium" selected>Medium (50x50)</option>
+                        <option value="hard">Hard (100x100)</option>
                     </select>
                 </div>
+                <div id="difficulty-group" class="settings-group" style="display: none;">
+                    <label for="difficulty-select">Level:</label>
+                    <select id="difficulty-select">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div id="chaos-group" class="settings-group" style="display: none;">
+                    <label>Cells:</label>
+                    <input type="number" id="chaos-cells" value="50" min="10" max="200" style="width: 50px;">
+                    <label>Mines:</label>
+                    <input type="number" id="chaos-mines" value="8" min="1" max="50" style="width: 50px;">
+                </div>
             </div>
+
             <div class="status-bar">
                 <div id="game-message">Good Luck, Explorer.</div>
                 <div class="stats">
                     <span id="hp-display">❤️ HP: 3</span>
                     <span id="scans-display">📡 Scans: 3</span>
+                    <span id="timer-display">⏱️ 00:00</span>
                 </div>
             </div>
 
-            <div id="maze-board">
-                <!-- JSでセルを生成 -->
+            <div id="highscore-bar" class="status-bar second-status">
+                <div id="score-display">✨ Score: 0</div>
+                <div id="highscore-display">🏆 High Score: 0</div>
+            </div>
+
+            <div id="navigation-hint" class="nav-hint" style="display: none;">
+                <div id="goal-arrow" class="arrow invisible-hint">↑</div>
+                <span id="scan-countdown" class="hint-text">Find the Goal!</span>
+            </div>
+
+            <!-- Board Container for Scroll/Scale -->
+            <div id="board-wrapper">
+                <div id="maze-board">
+                    <!-- JSでセルを生成 -->
+                </div>
             </div>
 
             <div class="controls-ui">
@@ -61,7 +93,9 @@
                 </div>
                 <div class="control-extra">
                     <button id="flag-mode-btn">Flag Mode: OFF</button>
-                    <button id="scan-btn">📡 Scan Surroundings</button>
+                    <button id="goal-scan-btn">🎯 Goal Scan</button>
+                    <button id="plant-flag-btn">🚩 Plant Goal Flag</button>
+                    <button id="scan-btn">📡 Area Scan</button>
                     <button id="reset-btn">Reset Game</button>
                 </div>
             </div>
