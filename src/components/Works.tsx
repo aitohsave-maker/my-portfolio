@@ -4,6 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useState } from 'react';
 
 const projectImages = [
+    "https://placehold.co/600x400/222222/00ffff?text=Gravity+Bumper",
     "https://placehold.co/600x400/1e293b/f8fafc?text=Blind+Labyrinth",
     "https://placehold.co/600x400/e0f2fe/0369a1?text=Elastic+Stickman",
     "https://placehold.co/600x400/dbeafe/2563eb?text=Shatter+Tetra",

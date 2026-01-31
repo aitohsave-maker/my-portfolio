@@ -38,6 +38,14 @@ export const translations = {
       closeLabel: "Close",
       items: [
         {
+          id: 8,
+          title: "Gravity Bumper",
+          category: "Latest Game",
+          description: "A physics puzzle game combined with pinball mechanics. Guide the ball to the goal using gravity and bumpers.",
+          link: "/games/gravity-bumper/index.html",
+          howToPlay: "Drag parts from the inventory to place them on the stage. Double-click placed parts to rotate them. Press 'Play' to start the simulation. Guide the ball to the goal!"
+        },
+        {
           id: 7,
           title: "Blind Labyrinth",
           category: "Latest Game",
@@ -136,6 +144,14 @@ export const translations = {
       closeLabel: "閉じる",
       items: [
         {
+          id: 8,
+          title: "Gravity Bumper",
+          category: "最新ゲーム",
+          description: "物理パズルとピンボールの融合。重力と設置ギミックを駆使してゴールを目指せ！",
+          link: "/games/gravity-bumper/index.html",
+          howToPlay: "下のインベントリからパーツをドラッグしてステージに配置します。配置したパーツはダブルクリックで回転可能。スタートボタンで物理演算開始。ボールをゴールへ導いてください。"
+        },
+        {
           id: 7,
           title: "ブラインド・ラビリンス",
           category: "最新ゲーム",
@@ -169,32 +185,33 @@ export const translations = {
         }
       ],
       archives: {
-        title: "倉庫 (アーカイブ)",
-        button: "倉庫に入る",
-        close: "倉庫を閉じる",
+        title: "The Warehouse (Archives)",
+        button: "Enter Warehouse",
+        close: "Close Warehouse",
         items: [
           {
             id: 101,
             title: "Gravity Swap",
-            category: "レガシー版 (v1)",
-            description: "初代 Gravity Swap。重力操作パズルの原点。(アーカイブ)",
+            category: "Legacy Game (v1)",
+            description: "The original gravity action-puzzle game. (Archived Version)",
             link: "/games/gravity-swap/index.html",
-            howToPlay: "重力を上下に切り替えて進む、シンプルな元祖グラビティ・アクション。"
+            howToPlay: "Original gravity switching mechanics. Tap to flip gravity."
           },
           {
             id: 102,
             title: "Gravity Swap 2",
-            category: "レガシー版 (v2)",
-            description: "Gravity Swapの続編。ギミックが強化されたバージョン。(アーカイブ)",
+            category: "Legacy Game (v2)",
+            description: "The sequel to Gravity Swap. (Archived Version)",
             link: "/games/gravity-swap-2/index.html",
-            howToPlay: "ステージ構成がより複雑になり、パズル要素が強化された第2弾。"
+            howToPlay: "Enhanced level design with more complex gravity puzzles."
           }
         ]
       }
     },
     contact: {
-      title: "お問い合わせ",
-      description: "新しいプロジェクトや技術的なご相談など、お気軽にお問い合わせください。"
+      title: "Get In Touch",
+      description: "Interested in collaboration or have a question? Feel free to reach out."
     }
-  }
+  },
+
 };
